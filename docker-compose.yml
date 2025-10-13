@@ -1,0 +1,17 @@
+services:
+  casimo-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Localdocker
+      - ASPNETCORE_URLS=http://+:9900;https://+:9901
+      - BlazorWebAssembly__PublicHost=https://localhost:9901
+      - BlazorWebAssembly__DetailedErrors=true
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=password
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+    ports:
+      - "9900:9900"
+      - "9901:9901"
+    volumes:
+      - ~/.aspnet/https:/https/

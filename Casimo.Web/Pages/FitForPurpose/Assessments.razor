@@ -1,0 +1,161 @@
+﻿@page "/Assessments"
+
+@using Casimo.Web.Components.Dialogues
+@inherits BaseDataComponent;
+
+<Card Title="Assessments" Reload="LoadAssessments">
+    <ChildContent>
+        <MudDataGrid Items="@assessmentsList" RowsPerPage="25" @bind-CurrentPage="currentPage" Loading=IsLoading
+                     QuickFilter="@_quickFilter" Dense="true" @bind-SelectedItems="selectedIds" MultiSelection="true" Groupable=true>
+            <ToolBarContent>
+                <MudTextField @bind-Value="searchString" Placeholder="@searchStringPlaceholder" Adornment="Adornment.Start"
+                              Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
+                              Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="AssessmentListItemDto" />
+                <TemplateColumn StickyLeft="true" HeaderStyle="max-width: 90px" ShowFilterIcon="false">
+                    <CellTemplate>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                   OnClick="@(() => ViewAssessment(context.Item.AssessmentLogId))" StartIcon="@Icons.Material.Filled.RemoveRedEye">
+                            View
+                        </MudButton>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.LgAid" Title="LgAid" HeaderStyle="max-width: 75px" ShowFilterIcon="false" />
+                <TemplateColumn Title="Facility">
+                    <CellTemplate>
+                        <MudLink Href="@($"/facilities/{context.Item.FacilityId}")" Typo="Typo.body2"
+                                 Color="Color.Secondary">
+                            @context.Item.FacilityName
+                        </MudLink>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.AssessmentLogId" Title="ID" HeaderStyle="max-width: 75px" ShowFilterIcon="false" />
+                <PropertyColumn Property="x => x.FacilityId" Title="Facility ID" HeaderStyle="max-width: 75px" ShowFilterIcon="false" />
+                <PropertyColumn Property="x => x.TemplateDescription" Title="Description" />
+                <PropertyColumn Property="x => x.TemplateTitle" Title="Template Title" />
+                <PropertyColumn Property="x => x.Use" Title="Use" />
+                <PropertyColumn Property="x => x.Status" Title="Status">
+                    <CellTemplate>
+                        <p style="color: @WebHelpers.AssessmentStatusToColour((AssessmentStatusEnum)context.Item.StatusId)">@context.Item.Status</p>
+                    </CellTemplate>
+                </PropertyColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="AssessmentListItemDto" />
+            </PagerContent>
+        </MudDataGrid>
+        @if (selectedIds.Count is not 0)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="GoToCreateAssessmentDialog">
+                New List
+            </MudButton>
+        }
+    </ChildContent>
+</Card>
+
+@code {
+    /// <summary>
+    /// Collection of assessments retrieved from the API
+    /// </summary>
+    private List<AssessmentListItemDto> assessmentsList = [];
+
+    /// <summary>
+    /// Search string for filtering assessments
+    /// </summary>
+    private string? searchString;
+
+    /// <summary>
+    /// Collection of selected assessment IDs for bulk operations
+    /// </summary>
+    private HashSet<AssessmentListItemDto> selectedIds = [];
+
+    /// <summary>
+    /// Current page number for the data grid
+    /// </summary>
+    private int currentPage = 0;
+
+    private static readonly string searchStringPlaceholder = "Seach by ID, FacilityID, Name...";
+
+    /// <summary>
+    /// Initializes the component and loads assessment data from the API
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    protected override async Task OnParametersSetAsync() => await LoadAssessments();
+
+    /// <summary>
+	/// Loads the list of assessments from the API
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadAssessments()
+    {
+        IsLoading = true;
+        // Now you can get the results from the completed tasks.
+        Result<List<AssessmentListItemDto>> assessResult = await _apiService.GetAssessmentList();
+
+        if (assessResult is { IsSuccess: true, Value: not null })
+            assessmentsList = assessResult.Value;
+        else
+            _snackbar.Add(assessResult.ErrorDescription ?? "Failed to load the list of assessments", Severity.Error);
+        IsLoading = false;
+    }
+
+    /// <summary>
+    /// Opens the dialog for creating a new assessment list from selected assessments
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    private Task GoToCreateAssessmentDialog()
+    {
+        DialogParameters<CreateAssessmentDialog> parameters = new()
+        {
+            { x => x.ListId, 0 },
+            { x => x.Assessments, selectedIds.Take(10).ToList() },
+        };
+
+        return _dialogService.ShowAsync<CreateAssessmentDialog>("Create New Assessment ", parameters);
+    }
+
+    /// <summary>
+    /// Navigates to the suitability assessment page for the specified assessment
+    /// </summary>
+    /// <param name="facilityId">The assessment log identifier to view</param>
+    private void ViewAssessment(int facilityId)
+    {
+        _navigationManager.NavigateTo($"/Assessments/{facilityId}");
+    }
+
+    /// <summary>
+    /// Quick filter function for filtering assessments based on search criteria
+    /// Filters by facility name, template title/description, status, and use
+    /// </summary>
+    private Func<AssessmentListItemDto, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        if (x.FacilityName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.TemplateTitle.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.TemplateDescription.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.AssessmentLogId.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.FacilityId.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.TemplateTitle.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.LgAid.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return x.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase) || x.Use.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+    };
+}

@@ -1,0 +1,57 @@
+@using Casimo.Shared.ApiModels.Responses
+@using Casimo.Web.Components.Dialogues
+@using Casimo.Shared
+@using System.Linq;
+
+<div class="question-border py-4 pe-3">
+	<h5>Category Summaries</h5>
+	<hr />
+	@foreach (SectionDetailDto summary in Sections)
+	{
+		<section class="mb-3" @key="summary">
+			<h6>@summary.SectionTitle</h6>
+			<div class="d-flex flex-row gap-2">
+				<MudTextField @bind-Value="summary.Summary" Variant="Variant.Outlined"
+							  Lines="4" Disabled=@Disabled OnInternalInputChanged="HasChanged"></MudTextField>
+				<MudSelect @bind-Value="summary.FFPScore" Label="Score" Class="mb-3" FitContent="true" Variant="Variant.Outlined">
+					@foreach (decimal score in scoreValues)
+					{
+						<MudSelectItem Value="@score">@score</MudSelectItem>
+					}
+				</MudSelect>
+			</div>
+		</section>
+	}
+</div>
+@code {
+	/// <summary>
+	/// Gets or sets the list of sections to display summaries for
+	/// </summary>
+	[Parameter]
+	public List<SectionDetailDto> Sections { get; set; } = [];
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the text fields should be disabled
+	/// </summary>
+	[Parameter]
+	public bool Disabled { get; set; } = false;
+
+	/// <summary>
+	/// Has Changed event callback
+	/// </summary>
+	[Parameter]
+	public required Action HasChanged { get; set; }
+	/// <summary>
+	/// The score values available for selection
+	/// </summary>
+	private List<decimal> scoreValues = [];
+
+	/// <summary>
+	/// Called when component parameters are set
+	/// Initializes the score values from 1 to 10
+	/// </summary>
+	protected override void OnParametersSet()
+	{
+		scoreValues = [.. Enumerable.Range(1, 10).Select(x => (decimal)x)];
+	}
+}

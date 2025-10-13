@@ -1,0 +1,55 @@
+﻿@page "/UserManager"
+@using Casimo.Shared
+@using Casimo.Shared.ApiModels
+@using Casimo.Shared.Constants
+@using Casimo.Web.Components
+@using Casimo.Web.Helpers
+@using Casimo.Web.Services.Interfaces
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inherits BaseDataComponent;
+
+@* The authorize attribute in Blazor WASM pages is executed on client-side only, thus it can be bypassed *@
+@attribute [Authorize(Roles = RoleConstants.AdminUser)]
+
+<Card>
+    <ChildContent>
+        <section class="usermanager-header mb-4">
+            <h3 class="color-primary">Manage Users</h3>
+            @* <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Add User</MudButton> *@
+        </section>
+
+        <MudDialog @bind-Visible="_visible">
+            <CreateUser />
+        </MudDialog>
+
+        <MudDataGrid Items="@_users" Filterable="true" SortMode="SortMode.Single" Loading=base.IsLoading Dense=true>
+            <Columns>
+                <TemplateColumn CellClass="" Title="View">
+                    <CellTemplate Context="user">
+                        <MudButton OnClick="(() => NavigateToUserPage(user.Item.UserId))" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.RemoveRedEye">View</MudButton>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.UserName" />
+                <PropertyColumn Property="x => x.Email" />
+                <PropertyColumn Property="x => x.PhoneNumber" />
+                <PropertyColumn Property="@((x) => x.ExpirationDate)" Title="Access Expiry" Format="dd/MM/yyyy" />
+                <TemplateColumn Title="Roles">
+                    <CellTemplate Context="user">
+                        @foreach (var role in user.Item.Roles)
+                        {
+                            <MudChip Color="@WebHelpers.ColourHelper(role)" Variant="Variant.Filled" Value="Color.Primary">@role</MudChip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+    </ChildContent>
+</Card>
+
+<style>
+    .usermanager-header {
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+

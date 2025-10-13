@@ -1,0 +1,40 @@
+﻿@using Casimo.Web.Helpers
+
+<div class="status-badge" style=@($"background-color: {color}")>@statusEnum.GetDisplayName()</div>
+
+@code {
+    /// <summary>
+    /// Gets or sets the assessment status enum to display
+    /// </summary>
+    [Parameter]
+    public AssessmentStatusEnum statusEnum { get; set; }
+
+    /// <summary>
+    /// The background color for the status badge based on the status enum
+    /// </summary>
+    private string color = string.Empty;
+
+    /// <summary>
+    /// Initializes the component and sets the appropriate color for the status badge
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        Console.WriteLine(statusEnum.ToString());
+        color = WebHelpers.AssessmentStatusToColour(statusEnum);
+    }
+}
+
+<style>
+    .status-badge {
+        color: white;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+    }
+
+</style>

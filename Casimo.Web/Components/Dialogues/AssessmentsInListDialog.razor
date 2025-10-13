@@ -1,0 +1,289 @@
+﻿@using System.ComponentModel.DataAnnotations
+@inherits BaseDataComponent;
+
+<MudDialog ContentStyle="width:700px; height: 500px">
+	<DialogActions>
+		<MudButton Color="Color.Default" OnClick="Close" Variant="Variant.Filled">Close</MudButton>
+	</DialogActions>
+	<DialogContent>
+		@if (IsAddingAssessment)
+		{
+			<MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => IsAddingAssessment = false)"></MudIconButton>
+			<div class="d-flex gap-3">
+				<MudAutocomplete Label="Add Assessments To List"
+								 @bind-Value="SelectedAssessment"
+								 SearchFunc="@Search"
+								 Immediate="true"
+								 ResetValueOnEmptyText="true"
+								 AdornmentIcon="@Icons.Material.Filled.Search"
+								 AdornmentColor="Color.Primary"
+								 Variant="Variant.Outlined"
+								 Required="true"
+								 RequiredError="Please select an assessment"
+								 ToStringFunc="@((x) => x.Item1)" />
+				<div>
+					<MudButton Class="mt-4" StartIcon="@Icons.Material.Filled.AddCircle" OnClick="AddAssessmentToList" Color="Color.Success" Variant="Variant.Filled">Add</MudButton>
+				</div>
+			</div>
+			@if (AssessmentsToAdd.Count > 0)
+			{
+				<div class="add-user-grid">
+					<MudTable Items="@AssessmentsToAdd" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info">
+						<HeaderContent>
+							<MudTh>Assessment ID</MudTh>
+							<MudTh>Remove</MudTh>
+						</HeaderContent>
+						<RowTemplate>
+							<MudTd DataLabel="Assessment ID">@context.LogId</MudTd>
+							<MudTd>
+								<MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled"
+											   Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveFromList(context.LogId))">
+								</MudIconButton>
+							</MudTd>
+						</RowTemplate>
+					</MudTable>
+				</div>
+
+				<div class="save-button-container">
+					<MudButton Variant="Variant.Filled"
+							   Color="Color.Primary"
+							   Size="Size.Small"
+							   StartIcon="@Icons.Material.Filled.Save"
+							   OnClick="@(async () => await SaveChanges())"
+							   Disabled="AssessmentsToAdd.Count == 0">
+						Save Changes (@AssessmentsToAdd.Count)
+					</MudButton>
+				</div>
+			}
+		}
+		else
+		{
+			<MudButton OnClick="(() => IsAddingAssessment = true)"
+					   Color="Color.Success"
+					   StartIcon="@Icons.Material.Filled.Add"
+					   Variant="Variant.Filled"
+					   Class="mb-3">
+				Add New Assessment
+			</MudButton>
+			<MudDataGrid Items="@Logs" RowsPerPage="15" CurrentPage="1" Filterable="true" Loading=this.IsLoading Dense="true">
+				<Columns>
+					<TemplateColumn Title="View" StickyLeft="true">
+						<CellTemplate>
+							<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+									   OnClick="@(() => ViewAssessment(context.Item.LogId))" StartIcon="@Icons.Material.Filled.RemoveRedEye">
+								View
+							</MudButton>
+						</CellTemplate>
+					</TemplateColumn>
+					<PropertyColumn Property="x => x.statusName" Title="Status">
+						<CellTemplate>
+							<p style="color: @WebHelpers.AssessmentStatusToColour((AssessmentStatusEnum)context.Item.statusId); ">@context.Item.statusName</p>
+						</CellTemplate>
+					</PropertyColumn>
+					<PropertyColumn Property="x => x.FacilityName" Title="Facility" />
+					<PropertyColumn Property="x => x.LogId" Title="Log ID" />
+					<PropertyColumn Property="x => x.LogName" Title="Assessment Title" />
+					<TemplateColumn Title="Remove">
+						<CellTemplate>
+							<MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+										   OnClick="@(() => RemoveFromList(context.Item.LogId))">
+							</MudIconButton>
+						</CellTemplate>
+					</TemplateColumn>
+				</Columns>
+				<PagerContent>
+					<MudDataGridPager T="AssessmentLogPartialDto" />
+				</PagerContent>
+			</MudDataGrid>
+		}
+	</DialogContent>
+</MudDialog>
+
+@code {
+
+	/// <summary>
+	/// Gets or sets the MudBlazor dialog instance for managing dialog state
+	/// </summary>
+	[CascadingParameter]
+	public required IMudDialogInstance MudDialog { get; set; }
+
+	/// <summary>
+	/// Gets or sets the identifier of the assessment list being displayed
+	/// </summary>
+	[Parameter]
+	public required AssessmentsListDto AssessmentList { get; set; }
+
+	/// <summary>
+	/// Gets or sets the collection of assessment logs to display in the grid
+	/// </summary>
+	[Parameter]
+	public List<AssessmentLogPartialDto> Logs { get; set; } = [];
+
+	/// <summary>
+	/// The assessments being added to the list
+	/// </summary>
+	private List<AssessmentLogPartialDto> AssessmentsToAdd = [];
+
+	/// <summary>
+	/// For added a new assessment to a list
+	/// </summary>
+	private bool IsAddingAssessment;
+
+	/// <summary>
+	/// Model for adding new assessments
+	/// </summary>
+	private AddAssessmentModel Model = new();
+
+	/// <summary>
+	/// Selected assessment from autocomplete
+	/// </summary>
+	private (string, int) SelectedAssessment;
+
+	/// <summary>
+	/// Closes the dialog and returns a successful result
+	/// </summary>
+	private void Close() => MudDialog.Close(DialogResult.Ok(true));
+
+	/// <summary>
+	/// Navigates to the suitability assessment page for the specified assessment
+	/// </summary>
+	/// <param name="logId">The assessment log identifier to view</param>
+	private void ViewAssessment(int logId) => _navigationManager.NavigateTo($"/Assessments/{logId}");
+
+	/// <summary>
+	/// Autofill results
+	/// </summary>
+	private HashSet<AssessmentListItemDto> autoFillResults = [];
+
+	/// <summary>
+	/// When page loads this is called and a model is created;
+	/// </summary>
+	protected override async Task OnInitializedAsync()
+	{
+		this.IsLoading = true;
+		Result<List<AssessmentListItemDto>> result = await _apiService.GetAssessmentList();
+		if (result.IsSuccess && result.Value is not null)
+		{
+			autoFillResults = result.Value.ToHashSet();
+		}
+		else
+		{
+			_snackbar.Add("Failed to load users", MudBlazor.Severity.Error);
+		}
+		base.IsLoading = false;
+	}
+
+	/// <summary>
+	/// Removes an assessment from the list by its identifier
+	/// </summary>
+	/// <param name="assessmentId">The assessment log identifier to remove</param>
+	private void RemoveFromList(int assessmentId)
+	{
+		Logs = Logs.Where(x => x.LogId != assessmentId).ToList();
+		StateHasChanged();
+	}
+
+	/// <summary>
+	/// Searches for assessments based on the provided search string
+	/// </summary>
+	/// <param name="searchString">The search term to filter assessments by</param>
+	/// <param name="token">Cancellation token for the async operation</param>
+	/// <returns>A collection of assessment tuples containing display text and log ID</returns>
+	private async Task<IEnumerable<(string, int)>> Search(string? searchString, CancellationToken token)
+	{
+		// if text is null or empty, show complete list
+		if (string.IsNullOrEmpty(searchString))
+			return autoFillResults
+			.Select(x => ($"Title: {x.TemplateTitle}, Id: {x.AssessmentLogId}, Facility: {x.FacilityName}, FacilityId: {x.FacilityId}", x.AssessmentLogId))
+			.Distinct();
+
+		return await Task.Run(() =>
+			autoFillResults
+			.Where(x =>
+				x.TemplateTitle.Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
+				x.AssessmentLogId.ToString().Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
+				x.FacilityName.Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
+				x.FacilityId.ToString().Contains(searchString, StringComparison.InvariantCultureIgnoreCase))
+			.Select(x => (($"Title: {x.TemplateTitle}, Id: {x.AssessmentLogId}, Facility: {x.FacilityName}, FacilityId: {x.FacilityId}", x.AssessmentLogId))));
+	}
+
+	/// <summary>
+	/// Adds the selected assessment to the assessment list
+	/// </summary>
+	private void AddAssessmentToList()
+	{
+		if (SelectedAssessment.Item2 == 0)
+		{
+			_snackbar.Add("Please select an assessment to add", MudBlazor.Severity.Warning);
+			return;
+		}
+
+		int assessmentId = SelectedAssessment.Item2;
+
+		// Check if assessment is already in the list
+		if (Logs.Any(x => x.LogId == assessmentId))
+		{
+			_snackbar.Add("This assessment is already in the list", MudBlazor.Severity.Warning);
+			return;
+		}
+
+		AssessmentListItemDto assessment = autoFillResults.First(x => x.AssessmentLogId == assessmentId);
+		// Add the selected assessment to the list
+		AssessmentLogPartialDto newAssessment = new AssessmentLogPartialDto(assessment.AssessmentLogId, assessment.TemplateTitle,
+			assessment.FacilityName, assessment.FacilityId, assessment.StatusId, assessment.Status);
+
+		Logs.Add(newAssessment);
+		AssessmentsToAdd.Add(newAssessment);
+
+		// Reset the form
+		SelectedAssessment = ("", 0);
+		StateHasChanged();
+	}
+
+	/// <summary>
+	/// Cancels the assessment adding process and resets the form
+	/// </summary>
+	private void CancelAdding()
+	{
+		SelectedAssessment = ("", 0);
+		IsAddingAssessment = false;
+	}
+
+	/// <summary>
+	/// Saves the changes made to the assessment list
+	/// </summary>
+	private async Task SaveChanges()
+	{
+		AssessmentListRequestDto req = new()
+		{
+			AssessmentListId = AssessmentList.Id,
+			AssessmentLogIds = Logs.Select(x => x.LogId).ToList(),
+			AssessmentListName = AssessmentList.ListName,
+			AssessmentListDescription = AssessmentList.Description
+		};
+
+		if (AssessmentsToAdd.Count != 0)
+			req.AssessmentLogIds.AddRange(AssessmentsToAdd.Select(x => x.LogId));
+
+		var result = await _apiService.SaveAssessmentList(req);
+
+		if (result.IsSuccess)
+		{
+			_snackbar.Add("Assessment list updated successfully", MudBlazor.Severity.Success);
+			AssessmentsToAdd.Clear(); // Clear the added assessments after successful save
+		}
+		else
+		{
+			_snackbar.Add("Failed to update assessment list", MudBlazor.Severity.Error);
+		}
+	}
+	/// <summary>
+	/// Model for adding assessments to a list
+	/// </summary>
+	public class AddAssessmentModel
+	{
+		[Required(ErrorMessage = "Please select an assessment")]
+		public int? AssessmentId { get; set; }
+	}
+}
+

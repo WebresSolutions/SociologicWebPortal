@@ -1,0 +1,162 @@
+﻿@page "/UserManager/{UserId}"
+@using System.Linq;
+@using Casimo.Shared
+@using Casimo.Shared.ApiModels
+@using Casimo.Shared.Constants
+@using Casimo.Shared.ResponseModels
+@using Casimo.Web.Services.Interfaces
+@inherits BaseDataComponent;
+@attribute [Authorize(Roles =@$"{RoleConstants.AdminUser}")]
+
+
+<Card IsLoading=base.IsLoading Title="Edit User">
+    <ChildContent>
+        <EditForm Model="User" OnValidSubmit="SaveChanges">
+            <DataAnnotationsValidator />
+            <div class="user-container">
+                <MudTextField @bind-Value="User.UserName" Label="User Name" Variant="Variant.Outlined" Disabled=true></MudTextField>
+                <MudTextField @bind-Value="User.Email" Label="Email" Variant="Variant.Outlined" Disabled=true></MudTextField>
+                <MudTextField @bind-Value="User.PhoneNumber" Label="Phone #" Variant="Variant.Outlined" MaxLength="20"></MudTextField>
+                <MudSelect MultiSelection="false" Variant="Variant.Outlined" @bind-Value="SelectValue" Label="Roles">
+                    @foreach (var role in AllRoles)
+                    {
+                        <MudSelectItem T="string" Value="@role.Name">@role.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                @if (SelectValue is RoleConstants.TemporaryUser)
+                {
+                    <MudDatePicker Label="Access Expiry" Editable="true" @bind-Date="User.ExpiryDate" Mask="@(new DateMask("0000-00-00"))" DateFormat="yyyy-MM-dd" Placeholder="Access Expiry" Variant="Variant.Outlined" />
+                }
+            </div>
+            <div class="submit-button">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Primary" ButtonType="ButtonType.Submit">Save</MudButton>
+            </div>
+        </EditForm>
+    </ChildContent>
+</Card>
+
+@code {
+
+    /// <summary>
+    /// Gets or sets the user identifier from the route parameter
+    /// </summary>
+    [Parameter]
+    public string UserId { get; set; } = null!;
+
+    #region Private Fields
+
+    /// <summary>
+    /// Temporary value for role selection binding
+    /// </summary>
+    private string SelectValue = "";
+
+    /// <summary>
+    /// User details object for editing
+    /// </summary>
+    private ManageUserDetailsDto User = null!;
+
+    /// <summary>
+    /// Collection of all available roles in the system
+    /// </summary>
+    private List<UserRolesDto> AllRoles = [];
+
+    /// <summary>
+    /// Collection of currently selected role options
+    /// </summary>
+    private List<string> Options = [];
+
+    #endregion
+
+    /// <summary>
+    /// Initializes the component and loads user data and available roles
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    protected override async Task OnParametersSetAsync()
+    {
+        base.IsLoading = true;
+        await GetUser();
+        await GetRoles();
+        SelectValue = User.Roles[0];
+        base.IsLoading = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Retrieves user details from the API based on the UserId parameter
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    private async Task GetUser()
+    {
+        try
+        {
+            Result<ManageUserDetailsDto> response = await _apiService.GetUserDetails(UserId);
+            if (response.IsSuccess && response.Value is not null)
+            {
+                User = response.Value;
+                Options = response.Value.Roles;
+            }
+            else
+            {
+                _snackbar.Add(response.ErrorDescription ?? "Failed to get user", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            // Handle exception
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all available user roles from the API
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    private async Task GetRoles()
+    {
+        Result<List<UserRolesDto>> result = await _apiService.GetUserRoles();
+
+        if (result.IsSuccess)
+            AllRoles = result.Value!;
+        else
+            _snackbar.Add(result.ErrorDescription ?? "Failed to get roles", Severity.Error);
+    }
+
+    /// <summary>
+    /// Saves changes to the user details and role assignments
+    /// Updates the user information via the API
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    private async Task SaveChanges(EditContext editContext)
+    {
+        if (!editContext.Validate())
+            return;
+
+        base.IsLoading = true;
+        User!.Roles = [SelectValue];
+        Result<ManageUserDetailsDto> res = await _apiService.SaveUserDetails(UserId, User!);
+
+        if (!res.IsSuccess)
+            _snackbar.Add(res.ErrorDescription ?? "Failed to save changes", Severity.Error);
+        else
+            _snackbar.Add(res.ErrorDescription ?? "Saved User Details Successfully", Severity.Success);
+        
+        base.IsLoading = false;
+        StateHasChanged();
+    }
+}
+<style>
+
+
+    .user-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        /* gap: var(--padding); */
+    }
+
+    .submit-button {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+</style>

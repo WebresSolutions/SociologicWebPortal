@@ -1,0 +1,186 @@
+﻿@page "/Facilities/{FacilityId:int}"
+@using Casimo.Shared
+@using Casimo.Shared.ApiModels.FitForPurpose
+@using Casimo.Shared.Constants
+@using GoogleMapsComponents
+@using GoogleMapsComponents.Maps
+@inherits BaseDataComponent;
+@inject IApiService ApiService
+@inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
+@inject IJSRuntime JSRuntime
+<div class="d-flex flex-column gap-4">
+
+    <Card IsLoading="IsLoading">
+        <TitleContent>
+            <div class="d-flex justify-content-start mb-5">
+                <h3 class="text-center mb-4">Facility Details</h3>
+            </div>
+        </TitleContent>
+        <ChildContent>
+            @if (_details is not null)
+            {
+                <EditForm Model="_details.FacilityDetails" OnValidSubmit="SaveFacility">
+                    <DataAnnotationsValidator />
+                    <div class="facility-details-container">
+                        <section class="d-flex flex-column gap-3">
+                            <div class="inner-container">
+                                <GoogleMap @ref="@_map1" Id="map1" Options="@_mapOptions" OnAfterInit="AfterMapRender" CssClass="border-rad"></GoogleMap>
+                            </div>
+                            <div class="facility-address">
+                                <div class="inner-container">
+                                    <MudTextField @bind-Value="_details.FacilityDetails.StreetAddress" Label="Street Address"
+                                                  Variant="Variant.Outlined"></MudTextField>
+                                    <ValidationMessage For="@(() => _details.FacilityDetails.StreetAddress)" />
+
+                                    <MudTextField @bind-Value="_details.FacilityDetails.Suburb" Label="Suburb/Town"
+                                                  Variant="Variant.Outlined"></MudTextField>
+                                    <ValidationMessage For="@(() => _details.FacilityDetails.Suburb)" />
+
+                                    <MudTextField @bind-Value="_details.FacilityDetails.PostCode" Label="PostCode"
+                                                  Variant="Variant.Outlined"></MudTextField>
+                                    <ValidationMessage For="@(() => _details.FacilityDetails.PostCode)" />
+                                </div>
+                                <div class="inner-container">
+                                    @if (_details.FacilityDetails.Coordinates is not null)
+                                    {
+                                        <MudTextField @bind-Value="_details.FacilityDetails.Coordinates.Latitude"
+                                                      Label="Y (Latitude)" Variant="Variant.Outlined"></MudTextField>
+                                        <ValidationMessage For="@(() => _details.FacilityDetails.Coordinates.Latitude)" />
+
+                                        <MudTextField @bind-Value="_details.FacilityDetails.Coordinates.Longitude"
+                                                      Label="X (Longitude)" Variant="Variant.Outlined"></MudTextField>
+                                        <ValidationMessage For="@(() => _details.FacilityDetails.Coordinates.Longitude)" />
+                                    }
+                                </div>
+                            </div>
+                        </section>
+                        <section class="d-flex flex-column gap-3">
+                            <div class="inner-container">
+                                <MudTextField @bind-Value="_details.FacilityDetails.SiteName" Label="Site name"
+                                              Variant="Variant.Outlined"></MudTextField>
+                                <ValidationMessage For="@(() => _details.FacilityDetails.SiteName)" />
+
+                                <MudTextField @bind-Value="_details.FacilityDetails.Owner" Label="Owner"
+                                              Variant="Variant.Outlined"></MudTextField>
+                                <ValidationMessage For="@(() => _details.FacilityDetails.Owner)" />
+
+                                <MudTextField @bind-Value="_details.FacilityDetails.Operator" Label="Operator"
+                                              Variant="Variant.Outlined"></MudTextField>
+                                <ValidationMessage For="@(() => _details.FacilityDetails.Operator)" />
+
+                                <MudSelect @bind-Value="_details.FacilityDetails.StatusId" Label="Status" Class="mb-3" FitContent="true"
+                                           Variant="Variant.Outlined">
+                                    @foreach (var status in _details.Statuses)
+                                    {
+                                        <MudSelectItem Value="status.Id">@status.StatusName</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <ValidationMessage For="@(() => _details.FacilityDetails.StatusId)" />
+
+                                <MudTextField @bind-Value="_details.FacilityDetails.Notes" Label="Notes" Variant="Variant.Outlined"
+                                              Lines="5"></MudTextField>
+                                <ValidationMessage For="@(() => _details.FacilityDetails.Notes)" />
+                            </div>
+                            <div class="inner-container">
+                                <h5>Related Assests</h5>
+                                <MudTable Items="_details.RelatedAssets" Hover=true>
+                                    <HeaderContent>
+                                        <MudTh>Asset Ref</MudTh>
+                                        <MudTh>Alternative Id</MudTh>
+                                        <MudTh>Asset Condition</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate Context="row_context">
+                                        <MudTd DataLabel="Ref">@row_context.Ref</MudTd>
+                                        <MudTd DataLabel="Alt Id">@row_context.AltId</MudTd>
+                                        <MudTd DataLabel="Condition">@row_context.Condition</MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            </div>
+                            <div class="inner-container">
+                                <h5>Sub Spaces</h5>
+                                <MudTable Items="_details.FacilitySubSpaces" Hover=true>
+                                    <HeaderContent>
+                                        <MudTh>Space Name</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate Context="row_context">
+                                        <MudTd DataLabel="Ref">@row_context</MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            </div>
+                        </section>
+                    </div>
+                    <AuthorizeView Roles=@($"{RoleConstants.FullUser}, {RoleConstants.AdminUser}") Context="authContext">
+                        <div class="text-end mt-3">
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled=_isSaving StartIcon="@Icons.Material.Filled.Save">Save Details</MudButton>
+                        </div>
+                    </AuthorizeView>
+                </EditForm>
+            }
+        </ChildContent>
+    </Card>
+    <Card IsLoading="IsLoading">
+        <TitleContent>
+            <div class="d-flex justify-content-start mb-5">
+                <h3 class="text-center mb-4">Related Uses</h3>
+            </div>
+        </TitleContent>
+        <ChildContent>
+            @if (_details is not null)
+            {
+                <div class ="inner-container">
+                    <MudDataGrid T="PartialAssessmentLogDto" Items="_details.AssessmentLogs" Hover="true" >
+                        <Columns>
+                            <PropertyColumn Property="x => x.Use" Title="Use" />
+                            <PropertyColumn Property="x => x.AccessType" Title="Access Type" />
+                            <PropertyColumn Property="x => x.Description" Title="Description" />
+                            <PropertyColumn Property="x => x.CouncilContactPerson" Title="Council Contact Person" />
+                            <PropertyColumn Property="x => x.Date" Title="Date" Format="dd/MM/yyyy" />
+                            <TemplateColumn Title="View" StickyRight="true">
+                                <CellTemplate>
+                                    <MudButton Icon="@Icons.Material.Filled.PanoramaFishEye" Variant="Variant.Filled"
+                                               Color="Color.Primary" Size="MudBlazor.Size.Small"
+                                               OnClick="@(() => ViewAssessment(context.Item.LogId))">
+                                        View
+                                    </MudButton>
+                                </CellTemplate>
+                            </TemplateColumn>
+                        </Columns>
+                        <NoRecordsContent>
+                            <MudText>No assessment logs available.</MudText>
+                        </NoRecordsContent>
+                    </MudDataGrid>
+                </div>
+            }
+        </ChildContent>
+    </Card>
+</div>
+
+<style>
+    .facility-details-container {
+        display: grid;
+        grid-template-columns: 2fr 2fr;
+        gap: 1rem;
+    }
+
+    .facility-address {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+    }
+
+    .inner-container {
+        border: solid 3px var(--color-grey);
+        background-color: var(--color-grey);
+        padding: 15px 15px 15px 15px;
+        transition: all 0.3s ease;
+        border-radius: var(--border-rad);
+        height: fit-content;
+    }
+
+    @@media(max-width: 1000px) {
+        .facility-details-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

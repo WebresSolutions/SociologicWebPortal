@@ -1,0 +1,30 @@
+﻿@inject IConfiguration Configuration
+
+@code {
+    /// <summary>
+    /// Gets or sets the cascading authentication state task for the component
+    /// </summary>
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    /// <summary>
+    /// Checks authentication status and redirects to login if user is not authenticated
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AuthenticationStateTask is not null)
+        {
+            AuthenticationState? authenticationState = await AuthenticationStateTask;
+
+            if (authenticationState?.User?.Identity is null || !authenticationState.User.Identity.IsAuthenticated)
+            {
+                string returnUrl = _navigationManager.ToBaseRelativePath(_navigationManager.Uri);
+                Console.WriteLine("ReturnURL: " + returnUrl);
+                // Use the current website's base URL instead of hardcoded Authority
+                string loginUrl = $"{_navigationManager.BaseUri}Identity/Account/Login?returnUrl={returnUrl}";
+                _navigationManager.NavigateTo(loginUrl, true);
+            }
+        }
+    }
+}

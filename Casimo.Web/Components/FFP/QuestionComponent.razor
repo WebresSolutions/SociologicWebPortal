@@ -1,0 +1,218 @@
+﻿@using System.Text.Json.Serialization
+@using Casimo.Shared.ApiModels.FitForPurpose
+@using Casimo.Shared.ApiModels.Responses
+@using Casimo.Shared.ResponseModels
+@using Casimo.Web.Helpers
+@using Newtonsoft.Json
+@inject IApiService _apiService;
+
+<div class="question-border">
+    <div class="question-header">
+        @if (IncludeSuggestedSolutions)
+        {
+            <div class="question-number">
+                @SectionId@Question.Subsection
+            </div>
+        }
+        @if (@ShowSelections)
+        {
+            <h5>
+                @Question.QuestionTitle
+            </h5>
+        }
+    </div>
+    <section class="question-container">
+        <div class="question d-flex flex-column">
+            <div class="question-text">
+                <div>@Question.QuestionText</div>
+            </div>
+            @if (@ShowSelections)
+            {
+                <div>
+                    <MudSelect @bind-Value="Question.Selection1Id" Label="Assessment" Class="mb-3" FitContent="true"
+                               Variant="Variant.Outlined" Disabled=Disabled TextChanged="HasChanged">
+                        @foreach (AssessmentSelectionDto asstSelection in Selections)
+                        {
+                            <MudSelectItem Value="asstSelection.SelectionId">@asstSelection.SelectionName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+            }
+            <div class="mb-3">
+                <span>FFP Now and Future</span>
+                <MudTextField @bind-Value="Question.ResponseText1" Variant="Variant.Outlined"
+                              Lines="4" TextChanged="HasChanged" Disabled=Disabled></MudTextField>
+            </div>
+            <div>
+                @if (IncludeSuggestedSolutions)
+                {
+                    <span>Suggested Solutions</span>
+                    <MudTextField @bind-Value="Question.ResponseText2" Variant="Variant.Outlined" Disabled=Disabled
+                                  Lines="4" TextChanged="HasChanged"></MudTextField>
+                }
+            </div>
+            @if (Question.HelpComments is not null && Question.HelpComments.Length > 0)
+            {
+                <section class="mt-1 suggestions-section">
+                    <small>@Question.HelpComments</small>
+                </section>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+
+    /// <summary>
+    /// Gets or sets the question data to be displayed and edited
+    /// </summary>
+    [Parameter]
+    public required QuestionResponseDetailDto Question { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the section identifier for the question
+    /// </summary>
+    [Parameter]
+    public required int SectionId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the list of available assessment selections for the question
+    /// </summary>
+    [Parameter]
+    public required List<AssessmentSelectionDto> Selections { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to show selection dropdowns
+    /// </summary>
+    [Parameter]
+    public bool ShowSelections { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to show selection dropdowns
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the assessment log identifier
+    /// </summary>
+    [Parameter]
+    public required int LogId { get; set; }
+
+    /// <summary>
+    /// Sets if the component should show the suggested solutions text
+    /// </summary>
+    [Parameter]
+    public required bool IncludeSuggestedSolutions { get; set; } = true;
+
+    /// <summary>
+	/// Action to invoke when the question data has changed
+    /// </summary>
+    [Parameter]
+    public required Action HasChanged { get; set; }
+    #region Private Fields
+
+    /// <summary>
+    /// Stores the initial state of the question for change detection
+    /// </summary>
+    private QuestionResponseDetailDto _initialQuestionState = null!;
+
+    /// <summary>
+    /// Indicates whether the component has been fully initialized
+    /// </summary>
+    private bool _isInitialized;
+
+    #endregion
+
+    /// <summary>
+    /// Initializes the component and clones the initial question state
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        // Clone the initial state of the Question object.
+        _initialQuestionState = Clone.CloneObject(Question);
+    }
+
+    /// <summary>
+    /// Called after the component has been rendered
+    /// Sets the initialization flag to true
+    /// </summary>
+    /// <param name="firstRender">True if this is the first render, false otherwise</param>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isInitialized = true;
+        }
+    }
+
+    /// <summary>
+    /// Reverts the question to its initial state and clears change tracking
+    /// </summary>
+    private void CancelChanges()
+    {
+        Question.ResponseText1 = _initialQuestionState.ResponseText1;
+        Question.ResponseText2 = _initialQuestionState.ResponseText2;
+    }
+
+}
+
+<style>
+    .question-container {
+        /*display: grid;*/
+        /*grid-template-columns: 1fr 2fr;*/
+        gap: 10px;
+        margin: 0px 0px 15px 30px;
+    }
+
+    .question {
+        padding: var(--padding);
+        border-radius: var(--border-rad);
+        /*background: var(--color-background);*/
+    }
+
+    .question-text {
+        font-size: 15px;
+        margin: 15px;
+    }
+
+    .question-number {
+        background: #3b82f6;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .question-header {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+        .question-header > h6 {
+            padding-top: 8px;
+        }
+
+    .suggestions-section {
+        background: #fefce8;
+        border: 1px solid #fde047;
+        border-radius: var(--border-rad);
+        padding: 8px;
+        color: var(--color-yellow);
+        width: fit-content;
+    }
+
+    .question-border {
+        border: solid 3px var(--color-grey);
+        background-color: var(--color-grey);
+        padding: 15px 15px 0px 15px;
+        transition: all 0.3s ease;
+        border-radius: var(--border-rad);
+    }
+</style>

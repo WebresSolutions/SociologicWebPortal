@@ -1,0 +1,191 @@
+﻿@page "/Assessments/{AssessmentId:int}"
+@using System.Linq;
+@using Casimo.Shared
+@using Casimo.Shared.ApiModels.Responses
+@using Casimo.Shared.Constants
+@using Casimo.Web.Components.Dialogues
+@inherits BaseDataComponent;
+
+<div class="d-flex flex-column gap-4">
+	<Card IsLoading="IsLoading" Reload="LoadAssessment">
+		<TitleContent>
+			@if (assessment is not null)
+			{
+				<div class="d-flex justify-content-between mb-5">
+					<div class="d-flex justify-content-center gap-2">
+						<MudIcon Icon="@Icons.Material.Filled.Assessment" Size="Size.Large" />
+						<h3 class="text-center mb-4">Suitability Assessment</h3>
+					</div>
+					<StatusBadge statusEnum="assessmentStatus" />
+				</div>
+			}
+		</TitleContent>
+		<ChildContent>
+			@if (assessment is not null)
+			{
+				<div class="mb-3">
+					<section class="assessment-details">
+						<div>
+							<h4>Facility: @assessment.FacilityName</h4>
+							<div class="d-flex flex-column gap-1">
+								<span>Use: @assessment.Use</span>
+								<span>Template: @assessment.TemplateName</span>
+							</div>
+						</div>
+						<div class="align">
+							<MudButton Variant="Variant.Filled" Color="Color.Default"
+									   onclick="ViewFacility" StartIcon="@Icons.Material.Filled.Warehouse" Class="mb-2">
+								View Facility
+							</MudButton>
+							<MudButton Variant="Variant.Filled" Color="Color.Default" StartIcon="@Icons.Material.Filled.People"
+									   onclick="(() => ViewUsers(assessment.LogId))" Class="mb-2">
+								View Assigned Users
+							</MudButton>
+						</div>
+					</section>
+				</div>
+				@if (lastSaved is not null)
+				{
+					<small>Last Updated: @lastSaved.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</small>
+				}
+			}
+		</ChildContent>
+	</Card>
+	<Card IsLoading="IsLoading" Height="1000">
+		<TitleContent>
+			<h4>@questionsAndResponseHeaderText</h4>
+		</TitleContent>
+		<ChildContent>
+			@if (assessment is not null)
+			{
+                <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="false" PanelClass="pa-6" 
+                         Centered=true ActivePanelIndex="selectedTab" ActivePanelIndexChanged="@((x)=> selectedTab = x)">
+                    <MudTabPanel Text="Responses" Icon="@Icons.Material.Filled.QuestionAnswer" BadgeData='@questionTabCount' BadgeColor="Color.Primary">
+                        <div class="question-select">
+                            <MudSelect @bind-value="selectedSection" Label="Select a category" Class="mb-3 category-select"
+                                       Variant="Variant.Outlined" FitContent="true" @bind-value:after="GetQuestionCount">
+                                @foreach (string questionSection in sections)
+                                {
+                                    <MudSelectItem Value="questionSection">@questionSection</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <span>This Category Contains @questionCount Questions</span>
+                        </div>
+                        @foreach (SectionDetailDto templateSection in assessment.Sections.Where(x => x.SectionTitle == selectedSection))
+                        {
+                            <div class="section-container">
+                                @foreach (QuestionResponseDetailDto question in templateSection.Questions.OrderBy(x => x.Subsection))
+                                {
+                                    <QuestionComponent @key="question" Question="question" SectionId="templateSection.SectionNumber"
+                                                       Selections="assessment.SelectionList" ShowSelections="true"
+                                                       LogId="assessment.LogId" Disabled=!AssessmentTabMap[assessmentStatus].ResponsesEditable HasChanged="@HasChanges" />
+                                }
+                            </div>
+                        }
+                    </MudTabPanel>
+                    @if (AssessmentTabMap[assessmentStatus].ShowSummariesAndScores)
+					{
+						<MudTabPanel Text="Summaries and scores" Icon="@Icons.Material.Filled.ShortText">
+							<div class="d-flex flex-column gap-3">
+								<GeneralComments GeneralCommentsList="assessment.GeneralComments" Disabled=!AssessmentTabMap[assessmentStatus].GeneralCommentsEditable HasChanged="@HasChanges" />
+								<SectionSummaries Sections="@assessment.SectionSummaries" Disabled=!AssessmentTabMap[assessmentStatus].SummariesAndScoresEditable HasChanged="@HasChanges" />
+							</div>
+						</MudTabPanel>
+					}
+					@if (AssessmentTabMap[assessmentStatus].ShowGeneralCommentsTab)
+					{
+						<MudTabPanel Text="General Comments" Icon="@Icons.Material.Filled.ShortText">
+							<div class="d-flex flex-column gap-3">
+								<GeneralComments GeneralCommentsList="assessment.GeneralComments" Disabled=!AssessmentTabMap[assessmentStatus].GeneralCommentsEditable HasChanged="@HasChanges" />
+							</div>
+						</MudTabPanel>
+					}
+				</MudTabs>
+				<div class="d-flex justify-content-end gap-3">
+					@if (canViewSaveButtons)
+					{
+						<AuthorizeView Roles=@($"{RoleConstants.TemporaryUser}") Context="authContext">
+							@if (assessmentStatus is (AssessmentStatusEnum.New or AssessmentStatusEnum.InProgress or AssessmentStatusEnum.UserReview))
+							{
+								<MudTooltip Text="Save a draft and finish later">
+									<MudButton OnClick="@(() => SaveChanges(AssessmentStatusEnum.InProgress))" Color="Color.Default"
+											   StartIcon="@Icons.Material.Filled.Save" Variant="Variant.Filled" Disabled=@IsLoading>
+										Save Changes
+									</MudButton>
+								</MudTooltip>
+							}
+							@if (assessment.StatusId is not (int)AssessmentStatusEnum.Completed)
+							{
+								<MudTooltip Text="Complete the assessment and submit">
+									<MudButton OnClick="@(() => SaveChanges(AssessmentStatusEnum.AdminReview))" Color="Color.Primary"
+											   StartIcon="@Icons.Material.Filled.RateReview" Variant="Variant.Filled" Disabled=@IsLoading>
+										Submit For Review
+									</MudButton>
+								</MudTooltip>
+							}
+						</AuthorizeView>
+
+						<AuthorizeView Roles=@($"{RoleConstants.FullUser}, {RoleConstants.AdminUser}") Context="authContext">
+							<MudTooltip Text="Save a draft and finish later">
+								<MudButton OnClick="@(() => SaveChanges(null))" Color="Color.Default"
+										   StartIcon="@Icons.Material.Filled.Save" Variant="Variant.Filled" Disabled=@IsLoading>
+									Save Changes
+								</MudButton>
+							</MudTooltip>
+							@if (assessment.StatusId is (int)AssessmentStatusEnum.AdminReview)
+							{
+								<MudTooltip Text="Return to the user for review">
+									<MudButton OnClick="@(() => SaveChanges(AssessmentStatusEnum.UserReview))" Color="Color.Info"
+											   StartIcon="@Icons.Material.Filled.RateReview" Variant="Variant.Filled" Disabled=@IsLoading>
+										Return For Review
+									</MudButton>
+								</MudTooltip>
+							}
+							@if (assessment.StatusId is not (int)AssessmentStatusEnum.Completed)
+							{
+								<MudTooltip Text="Complete">
+									<MudButton OnClick="@(() => SaveChanges(AssessmentStatusEnum.Completed))" Color="Color.Success"
+											   StartIcon="@Icons.Material.Filled.Check" Variant="Variant.Filled" Disabled=@IsLoading>
+										Complete Assessment
+									</MudButton>
+								</MudTooltip>
+							}
+						</AuthorizeView>
+					}
+				</div>
+			}
+		</ChildContent>
+	</Card>
+</div>
+
+<style>
+	.assessment-details {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.section-container {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+	}
+
+	.question-border {
+		border: solid 3px var(--color-grey);
+		background-color: var(--color-grey);
+		padding: 15px 15px 0px 15px;
+		transition: all 0.3s ease;
+		border-radius: var(--border-rad);
+	}
+
+	.question-select {
+		position: sticky;
+		top: 30px;
+		z-index: 99;
+		backdrop-filter: blur(5px);
+		padding: 20px;
+		border-radius: var(--border-rad);
+		width: fit-content;
+	}
+</style>

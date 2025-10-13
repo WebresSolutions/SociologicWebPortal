@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>@ViewBag.Title</title>
+    <base href="~/" />
+    <!-- ✅ Corrected Bootstrap CSS CDN with computed integrity hash -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous" />
+    <title>Casimo</title>
+    <link rel="icon" type="image/png" href="~/casimo_logo.png" />
+    <style>
+        :root {
+            --color-primary: #111344;
+            --color-secondary: #e03e29;
+            --color-background: #f5f5ff;
+            --color-white: #ffffff;
+        }
+
+        body {
+            color: var(--color-primary);
+            background-color: var(--color-background) !important;
+            transition: color 0.5s, background-color 0.5s;
+            line-height: 1.6;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            font-size: 15px;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .content {
+            display: flex;
+            justify-content: center;
+            margin-top: 200px;
+        }
+
+        .container-background {
+            background-color: var(--color-white);
+            padding: 3rem;
+            min-height: 450px;
+            min-width: 350px;
+            box-shadow: rgba(33, 35, 38, 0.1) 0px 10px 10px -10px !important;
+            border-radius: 15px;
+        }
+
+        .container-card {
+            background-color: var(--color-white);
+            padding: 3rem;
+            min-height: 450px;
+            min-width: 350px;
+            max-width: 350px;
+            box-shadow: rgba(33, 35, 38, 0.1) 0px 10px 10px -10px !important;
+            border-radius: 15px;
+        }
+
+        .active {
+            background-color: var(--color-primary) !important;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .btn-secondary {
+            background-color: var(--color-secondary);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="content px-4">
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- ✅ Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-LfbNtvhkSW1VKNcQv1khUvDIXBPc8yWQGxyDNoYnF7ntpL/J0v3ld+ozhrELj2su"
+            crossorigin="anonymous"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

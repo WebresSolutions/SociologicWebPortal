@@ -1,0 +1,39 @@
+﻿@{
+    if (ViewData.TryGetValue("ParentLayout", out object? parentLayout) && parentLayout != null)
+    {
+        Layout = parentLayout.ToString();
+    }
+    else
+    {
+        Layout = "/Areas/Identity/Pages/_Layout.cshtml";
+    }
+    string returnUrl = Context.Request.PathBase;
+}
+
+
+<div class="container container-background">
+    <div class="row justify-content-center ">
+        <div class="col-12 col-md-6 w-100">
+            <a href="/@returnUrl">Back to Fit For Purpose</a>
+
+            <h1 class="">Manage your account</h1>
+            <div>
+                <h2>Change your account settings</h2>
+                <hr />
+                <div class="row">
+                    <div class="col-md-3">
+                        <partial name="_ManageNav" />
+                    </div>
+                    <div class="col-md-9">
+                        @RenderBody()
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

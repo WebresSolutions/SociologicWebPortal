@@ -1,0 +1,30 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.JSInterop
+@using Casimo.Web
+@using Casimo.Web.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Casimo.Web.Components
+@using Casimo.Web.Components.UI
+@using MudBlazor
+@using Casimo.Web.Services
+@using Casimo.Web.Services.Interfaces
+@using Casimo.Shared.ApiModels.FitForPurpose
+@using Casimo.Shared.ApiModels.User
+@using Casimo.Shared.Helpers
+@using Casimo.Shared.ResponseModels
+@using Casimo.Shared.Enums
+@using Casimo.Web.Components.FFP
+@using Casimo.Web.Helpers
+
+@inject IApiService _apiService;
+@inject IDialogService _dialogService;
+@inject NavigationManager _navigationManager;
+@inject ISnackbar _snackbar;
+@inject IJSRuntime _jsRuntime;

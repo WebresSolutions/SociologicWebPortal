@@ -1,0 +1,160 @@
+﻿@using Casimo.Shared.ApiModels
+@inherits BaseDataComponent;
+
+<EditForm Model="Model" OnValidSubmit="AddUserToList">
+	<DataAnnotationsValidator />
+	<div class="d-flex flex-row gap-3">
+		<MudAutocomplete Label="Email" @bind-Value="Model!.Email" Required="true"
+						 SearchFunc="@Search" Immediate="true" CoerceValue="true" ResetValueOnEmptyText="true"
+						 AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" Variant="Variant.Outlined"
+						 For="@(() => Model!.Email)" s />
+		<div >
+			<MudButton Class="mt-4" StartIcon="@Icons.Material.Filled.AddCircle" ButtonType="ButtonType.Submit" Color="Color.Success" Variant="Variant.Filled">Add</MudButton>
+		</div>
+	</div>
+</EditForm>
+@if (usersToAddToList.Count > 0)
+{
+	<div class="add-user-grid">
+		<MudTable Items="@usersToAddToList" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info" Loading=isLoading>
+			<HeaderContent>
+				<MudTh>Email</MudTh>
+				<MudTh>Remove</MudTh>
+			</HeaderContent>
+			<RowTemplate>
+				<MudTd DataLabel="Email/User Name">@context</MudTd>
+				<MudTd>
+					<MudIconButton Icon="@Icons.Material.Filled.PersonRemove" Variant="Variant.Filled"
+								   Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveUser(context))">
+					</MudIconButton>
+				</MudTd>
+			</RowTemplate>
+		</MudTable>
+	</div>
+
+	<div class="save-button-container">
+		<MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled=isLoading StartIcon="@Icons.Material.Filled.Save">Save Users</MudButton>
+	</div>
+}
+
+
+@code {
+	/// <summary>
+	/// Gets or sets the form model for user invitation
+	/// </summary>
+	[SupplyParameterFromForm]
+	private UserInviteFormModel? Model { get; set; } = new();
+
+	/// <summary>
+	/// Gets or sets the identifier of the assessment list to invite users to
+	/// </summary>
+	[Parameter]
+	public int ListId { get; set; }
+
+	/// <summary>
+	/// Gets or sets the callback to reload the parent list after user invitation
+	/// </summary>
+	[Parameter]
+	public EventCallback ReloadList { get; set; }
+
+	/// <summary>
+	/// Collection of user emails for autocomplete functionality
+	/// </summary>
+	private string[] autoFillResults = [];
+
+	/// <summary>
+	/// Collection of users selected to be added to the assessment list
+	/// </summary>
+	private HashSet<string> usersToAddToList = [];
+
+	/// <summary>
+	/// Indicates whether the component is currently processing a request
+	/// </summary>
+	private bool isLoading = false;
+	/// <summary>
+	/// When page loads this is called and a model is created;
+	/// </summary>
+	protected override async Task OnInitializedAsync()
+	{
+		this.IsLoading = true;
+		Result<List<UserDto>>? result = await _apiService.GetAllUsers();
+		if (result.IsSuccess && result.Value is not null)
+		{
+			autoFillResults = result.Value.Select(x => x.Email ?? "").ToArray();
+		}
+		else
+		{
+			_snackbar.Add("Failed to load users", MudBlazor.Severity.Error);
+		}
+		base.IsLoading = false;
+		Model ??= new();
+	}
+
+	/// <summary>
+	/// Adds a user to the invitation list if validation passes and the user is not already added
+	/// </summary>
+	/// <param name="editContext">The form validation context</param>
+	private void AddUserToList(EditContext editContext)
+	{
+		if (editContext.Validate() && Model!.Email is not null && !usersToAddToList.Contains(Model!.Email ?? ""))
+		{
+			usersToAddToList.Add(Model!.Email!);
+			Model = new();
+		}
+	}
+
+	/// <summary>
+	/// Removes a user from the invitation list
+	/// </summary>
+	/// <param name="email">The email address of the user to remove</param>
+	private void RemoveUser(string email) => usersToAddToList.Remove(email);
+
+	/// <summary>
+	/// Submits the user invitations to the assessment list
+	/// Sends invitation requests to the API and reloads the parent list
+	/// </summary>
+	/// <returns>A task representing the asynchronous operation</returns>
+	private async Task Submit()
+	{
+		isLoading = true;
+
+		UserAssessmentListInvite req = new(usersToAddToList.ToArray(), ListId);
+
+		Result<bool> inviteResult = await _apiService.InviteUserToAssessmentList(req);
+
+		if (!inviteResult.IsSuccess)
+			_snackbar.Add("Failed to invite users to list of assessments", Severity.Error);
+
+		await ReloadList.InvokeAsync();
+		isLoading = true;
+	}
+
+	/// <summary>
+	/// Searches for users based on the provided search string
+	/// Filters the autocomplete results to match the search criteria
+	/// </summary>
+	/// <param name="value">The search string to filter users by</param>
+	/// <param name="token">Cancellation token for the async operation</param>
+	/// <returns>A collection of matching user email addresses</returns>
+	private async Task<IEnumerable<string?>> Search(string? value, CancellationToken token)
+	{
+		// if text is null or empty, show complete list
+		if (string.IsNullOrEmpty(value))
+			return autoFillResults;
+
+		return await Task.Run(() => autoFillResults.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+	}
+}
+<style>
+	.add-user-grid {
+		margin-bottom: 1rem;
+	}
+
+	.save-button-container {
+		display: flex;
+		justify-content: flex-end;
+		padding: 1rem 0;
+		border-top: 1px solid #e0e0e0;
+		margin-top: 1rem;
+	}
+</style>

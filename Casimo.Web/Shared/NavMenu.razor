@@ -1,0 +1,71 @@
+﻿@using Casimo.Shared
+@using Casimo.Shared.Constants
+
+<section class="nav-bar-side shadow">
+    <div class="top-row">
+        <img alt="Casimo Logo" src="/images/logo.png" style="width: 50px"/>
+        <a class="navbar-brand ms-2" href="">CASIMO</a>
+    </div>
+    
+    <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+        <ul class="nav flex-column">
+            <AuthorizeView >
+            <li class="nav-item px-2">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <MudIcon Icon="@Icons.Material.Filled.Home" Title="Home" />
+                    My Assessments
+                </NavLink>
+            </li>
+            </AuthorizeView>
+            <AuthorizeView Roles=@($"{RoleConstants.AdminUser}")>
+                <li class="nav-item px-2">
+                    <NavLink class="nav-link" href="UserManager">
+                        <MudIcon Icon="@Icons.Material.Filled.Group" Title="Favorite" />
+                        Users
+                    </NavLink>
+                </li>
+            </AuthorizeView>
+
+            <AuthorizeView Roles=@($"{RoleConstants.FullUser}, {RoleConstants.AdminUser}")>
+                <li class="nav-item px-2">
+                    <NavLink class="nav-link" href="Facilities">
+                        <MudIcon Icon="@Icons.Material.Filled.Warehouse" Title="Favorite" />
+                        Facilities
+                    </NavLink>
+                </li>
+                <li class="nav-item px-2">
+                    <NavLink class="nav-link" href="Assessments">
+                        <MudIcon Icon="@Icons.Material.Filled.Checklist" Title="Favorite" />
+                        Assessments
+                    </NavLink>
+                </li>
+                <li class="nav-item px-2">
+                    <NavLink class="nav-link" href="AssessmentLists">
+                        <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Title="Favorite" />
+                        Lists
+                    </NavLink>
+                </li>
+            </AuthorizeView>
+        </ul>
+    </div>
+</section>
+
+@code {
+    /// <summary>
+    /// Controls the collapsed state of the navigation menu
+    /// </summary>
+    private bool collapseNavMenu = true;
+
+    /// <summary>
+    /// Gets the CSS class for the navigation menu based on its collapsed state
+    /// </summary>
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    /// <summary>
+    /// Toggles the collapsed state of the navigation menu
+    /// </summary>
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

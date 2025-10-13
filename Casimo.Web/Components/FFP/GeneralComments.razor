@@ -1,0 +1,54 @@
+@using Casimo.Shared.ApiModels.Responses
+@using Casimo.Web.Components.Dialogues
+@using Casimo.Shared
+@using System.Linq;
+
+<div class="question-border general-comments-container">
+	@foreach (SectionDetailDto templateSection in GeneralCommentsList)
+	{
+		<div>
+			<h5>@templateSection.SectionTitle</h5>
+			<div class="section-container">
+				<section class="mb-3">
+					<div class="d-flex flex-row gap-2">
+						<MudTextField @bind-Value="templateSection.Summary" Variant="Variant.Outlined"
+									  Lines="5" Disabled=@Disabled TextChanged="@HasChanged"></MudTextField>
+					</div>
+				</section>
+			</div>
+		</div>
+	}
+</div>
+
+@code {
+	/// <summary>
+	/// Gets or sets the list of general comments sections to display
+	/// </summary>
+	[Parameter]
+	public List<SectionDetailDto> GeneralCommentsList { get; set; } = [];
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the text fields should be disabled
+	/// </summary>
+	[Parameter]
+	public bool Disabled { get; set; } = false;
+
+	[Parameter]
+	public required Action HasChanged { get; set; }
+
+	/// <summary>
+	/// Called when component parameters are set
+	/// </summary>
+	protected override void OnParametersSet()
+	{
+	}
+
+}
+
+<style>
+	.general-comments-container {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+	}
+</style>

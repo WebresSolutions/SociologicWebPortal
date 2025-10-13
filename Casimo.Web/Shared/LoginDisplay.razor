@@ -1,0 +1,95 @@
+﻿@using Casimo.Shared
+@using Casimo.Shared.Constants
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject NavigationManager Navigation
+
+<ul class="nav flex-row top-nav" style="min-width:190px">
+	<li class="">
+		<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+			<img alt="Casimo Logo" src="/images/logo.png" style="width: 50px" />
+			<a class="navbar-brand ms-2" href="">CASIMO</a>
+		</NavLink>
+	</li>
+	<AuthorizeView>
+		<li class="nav-item px-2">
+			<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+				<MudIcon Icon="@Icons.Material.Filled.Home" Title="Home" />
+				Home
+			</NavLink>
+		</li>
+	</AuthorizeView>
+	<AuthorizeView Roles=@($"{RoleConstants.AdminUser}")>
+		<li class="nav-item px-2">
+			<NavLink class="nav-link" href="UserManager">
+				<MudIcon Icon="@Icons.Material.Filled.Group" Title="Favorite" />
+				Users
+			</NavLink>
+		</li>
+	</AuthorizeView>
+
+	<AuthorizeView Roles=@($"{RoleConstants.FullUser}, {RoleConstants.AdminUser}")>
+		<li class="nav-item px-2">
+			<NavLink class="nav-link" href="Facilities">
+				<MudIcon Icon="@Icons.Material.Filled.Warehouse" Title="Favorite" />
+				Facilities
+			</NavLink>
+		</li>
+		<li class="nav-item px-2">
+			<NavLink class="nav-link" href="Assessments">
+				<MudIcon Icon="@Icons.Material.Filled.Checklist" Title="Favorite" />
+				Facilities
+			</NavLink>
+		</li>
+		<li class="nav-item px-2">
+			<NavLink class="nav-link" href="AssessmentLists">
+				<MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Title="Favorite" />
+				Lists
+			</NavLink>
+		</li>
+	</AuthorizeView>
+</ul>
+
+<AuthorizeView>
+	<Authorized>
+		<div class="register-container">
+			@if (context.User.IsInRole(RoleConstants.AdminUser) || context.User.IsInRole(RoleConstants.FullUser))
+			{
+				<button class="bg-white" @onclick="GoToManageAccountScreen">@context?.User?.Identity?.Name</button>
+				<button class="bg-white" @onclick="BeginSignOut">Log out</button>
+			}
+			else if (context.User.IsInRole(RoleConstants.TemporaryUser))
+			{
+				<button class="bg-white">@context?.User?.Identity?.Name</button>
+				<button class="bg-white" @onclick="BeginSignOut">Log out</button>
+			}
+		</div>
+	</Authorized>
+	<NotAuthorized>
+		<div class="register-container">
+			<a href="authentication/login" class="bg-white">Log in</a>
+		</div>
+	</NotAuthorized>
+</AuthorizeView>
+@code {
+	/// <summary>
+	/// Initiates the sign-out process by navigating to the logout endpoint
+	/// </summary>
+	/// <param name="args">Mouse event arguments from the button click</param>
+	private void BeginSignOut(MouseEventArgs args)
+	{
+		Navigation.NavigateToLogout("authentication/logout");
+	}
+
+	/// <summary>
+	/// Navigates to the account management screen for the current user
+	/// </summary>
+	/// <param name="args">Mouse event arguments from the button click</param>
+	private void GoToManageAccountScreen(MouseEventArgs args)
+	{
+		var currentUrl = Navigation.Uri;
+		Navigation.NavigateTo($"Identity/Account/Manage?returnUrl={Uri.EscapeDataString(currentUrl)}", forceLoad: true);
+	}
+
+}

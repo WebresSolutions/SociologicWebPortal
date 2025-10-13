@@ -1,0 +1,129 @@
+﻿@using Casimo.Shared.Constants
+@inherits BaseDataComponent;
+
+<Card IsLoading=IsLoading Title="">
+	<TitleContent>
+		<div class="d-flex justify-content-center gap-2">
+			<MudIcon Icon="@Icons.Material.Filled.EditNote" Size="Size.Large" />
+			<h3 class="text-center mb-4">My Fitness for Purpose Assessments</h3>
+		</div>
+	</TitleContent>
+	<ChildContent>
+		<div class="d-flex flex-column gap-2">
+			@foreach (var assessment in _assessments)
+			{
+				<div @key="assessment.Key" class="@( _assessments.ToList().IndexOf(assessment) % 2 == 1 ? "primary background" : "grey background")">
+					<MudDataGrid Items="@assessment.Value" Class="mb-3" Dense=true Filterable=false>
+						<ToolBarContent>
+							<MudText Typo="Typo.h6" Style=@($"color: {WebHelpers.AssessmentStatusToColour(assessment.Key)}")>@assessment.Key.GetDisplayName()</MudText>
+						</ToolBarContent>
+						<Columns>
+							<TemplateColumn Title="View">
+								<CellTemplate>
+									<MudButton StartIcon="@Icons.Material.Filled.RemoveRedEye" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => ViewAssessment(context.Item.AssessmentLogId))">View</MudButton>
+								</CellTemplate>
+							</TemplateColumn>
+							<TemplateColumn Title="Facility or Space" CellStyle="width: 180px">
+								<CellTemplate>
+									<MudLink Href="@($"/facilities/{context.Item.FacilityId}")" Typo="Typo.body2" Color="Color.Secondary">
+										@context.Item.FacilityName
+									</MudLink>
+								</CellTemplate>
+							</TemplateColumn>
+							<PropertyColumn Property="x => x.Use" Title="Assessed Use" />
+							<PropertyColumn Property="x => x.LastEdited" Title="Last Edited" Format="@StringFormat.DateWithTime" />
+							<PropertyColumn Property="x => x.LastEditedBy" Title="Last Edit"/>
+						</Columns>
+					</MudDataGrid>
+				</div>
+			}
+		</div>
+	</ChildContent>
+</Card>
+@code {
+
+	/// <summary>
+	/// Collection of user assessment lists retrieved from the API
+	/// </summary>
+	private List<UserAssessmentListDto> _userAssessmentLists = [];
+
+	/// <summary>
+	/// Dictionary of assessments grouped by their status for display purposes
+	/// </summary>
+	private Dictionary<AssessmentStatusEnum, AssessmentListItemDto[]> _assessments = [];
+
+	/// <summary>
+	/// Initializes the component and loads user assessment data
+	/// Groups assessments by status for organized display
+	/// </summary>
+	/// <returns>A task representing the asynchronous operation</returns>
+	protected override async Task OnParametersSetAsync()
+	{
+		base.IsLoading = true;
+		try
+		{
+			if (AuthenticationStateTask is not null)
+			{
+				AuthenticationState? authenticationState = await AuthenticationStateTask;
+				Result<List<UserAssessmentListDto>> userAssessments = await _apiService.GetUserAssignments();
+				if (userAssessments is { Value: not null, IsSuccess: true })
+				{
+					_userAssessmentLists = userAssessments.Value;
+					_assessments = _userAssessmentLists
+						.SelectMany(x => x.AssessmentList)
+						.DistinctBy(x => x.AssessmentLogId)
+						.OrderBy(x => x.StatusId)
+						.GroupBy(x => x.StatusId)
+						.ToDictionary(g => (AssessmentStatusEnum)g.Key, g => g.ToArray());
+
+					// Set the LastEdited property to local time for display
+					foreach (KeyValuePair<AssessmentStatusEnum, AssessmentListItemDto[]> assessmentList in _assessments)
+						foreach (AssessmentListItemDto listItem in assessmentList.Value)
+							if (listItem.LastEdited is not null)
+								listItem.LastEdited = listItem.LastEdited.Value.ToLocalTime();
+				}
+				else
+					_snackbar.Add("Failed to load user assessments", Severity.Error);
+			}
+		}
+		catch (Exception)
+		{
+			_snackbar.Add("Failed to load user assessments", Severity.Error);
+		}
+
+		base.IsLoading = false;
+	}
+
+	/// <summary>
+	/// Navigates to the facility details page for the specified facility ID
+	/// </summary>
+	/// <param name="facilityId">The ID of the facility to view</param>
+	private void ViewFacilty(int facilityId)
+	{
+		_navigationManager.NavigateTo($"/Facilities/{facilityId}");
+	}
+
+	/// <summary>
+	/// Navigates to the suitability assessment page for the specified assessment ID
+	/// </summary>
+	/// <param name="facilityId">The ID of the assessment to view</param>
+	private void ViewAssessment(int facilityId)
+	{
+		_navigationManager.NavigateTo($"/Assessments/{facilityId}");
+	}
+}
+
+<style>
+	.background {
+		padding: 15px 15px 0px 15px;
+		border-radius: var(--border-rad);
+	}
+
+	.grey {
+		background-color: var(--color-grey);
+	}
+
+	.primary {
+		background-color: var(--color-background);
+	}
+</style>

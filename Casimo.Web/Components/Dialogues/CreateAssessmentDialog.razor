@@ -1,0 +1,80 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_req.AssessmentListName" Label="List Name" Variant="Variant.Outlined" MaxLength="255"
+                      Lines="1" ></MudTextField>
+        <MudTextField @bind-Value="_req.AssessmentListDescription" Label="List Description" Variant="Variant.Outlined" MaxLength="500"
+                      Lines="2" ></MudTextField>
+        <MudDataGrid Items="@Assessments" RowsPerPage="15" CurrentPage="1" Filterable="true">
+            <Columns>
+                <PropertyColumn Property="x => x.TemplateTitle" Title="Assessment Title" />
+                <PropertyColumn Property="x => x.AssessmentLogId" Title="Log ID" />
+                <PropertyColumn Property="x => x.FacilityName" Title="Facility" />
+                <PropertyColumn Property="x => x.FacilityId" Title="Facility ID" />
+            </Columns>
+        </MudDataGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Default" OnClick="Close">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    /// <summary>
+    /// Gets or sets the MudBlazor dialog instance for managing dialog state
+    /// </summary>
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    /// <summary>
+    /// Gets or sets the identifier of the assessment list being created
+    /// </summary>
+    [Parameter]
+    public int ListId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the collection of assessments to be included in the new list
+    /// </summary>
+    [Parameter]
+    public List<AssessmentListItemDto> Assessments { get; set; } = [];
+
+    /// <summary>
+    /// Request object containing the assessment list creation data
+    /// </summary>
+    private AssessmentListRequestDto _req = new();
+
+    /// <summary>
+    /// Saves the new assessment list by sending the request to the API
+    /// Shows success/error messages and closes the dialog on completion
+    /// </summary>
+    private async void Save()
+    {
+        try
+        {
+            _req.AssessmentLogIds = Assessments.Select(x => x.AssessmentLogId).ToList();
+
+            Result<AssessmentListResponseDto> result = await _apiService.SaveAssessmentList(_req);
+
+            if (result.IsSuccess)
+            {
+                _snackbar.Add(result.ErrorDescription ?? "Successfully created a new list", Severity.Success);
+                Close();
+            }
+            else
+            {
+                _snackbar.Add(result.ErrorDescription ?? "Failed to create the new list of assessments", Severity.Error);
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    /// <summary>
+    /// Closes the dialog and returns a successful result
+    /// </summary>
+    private void Close() => MudDialog.Close(DialogResult.Ok(true));
+
+}

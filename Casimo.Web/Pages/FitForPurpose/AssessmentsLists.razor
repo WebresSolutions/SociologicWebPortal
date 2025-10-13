@@ -1,0 +1,126 @@
+﻿@page "/AssessmentLists"
+@using Casimo.Shared.Constants
+@using Casimo.Web.Components.Dialogues
+@using Casimo.Web.Helpers
+@inherits BaseDataComponent;
+
+<Card Title="Assessment Lists">
+	<ChildContent>
+		<MudDataGrid Items="@assessmentListsItems" RowsPerPage="15" CurrentPage="1" Filterable="true" Loading="IsLoading" Dense=true>
+			<Columns>
+				<PropertyColumn Property="x => x.ListName" Title="Name" />
+				<PropertyColumn Property="x => x.Description" Title="Description" />
+				<PropertyColumn Property="x => x.DateAdded" Title="Date Created" Format="@StringFormat.DateWithTime" />
+				<TemplateColumn Title="Users">
+					<CellTemplate>
+						<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+								   OnClick="@(() => ViewUsers(context.Item.Id))" StartIcon="@Icons.Material.Filled.RemoveRedEye">
+							Users
+						</MudButton>
+					</CellTemplate>
+				</TemplateColumn>
+				<TemplateColumn Title="Users">
+					<CellTemplate>
+						<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.RemoveRedEye"
+								   OnClick="@(() => ViewAssessments(context.Item, context.Item.AssessmentLogs))">
+							Assessments
+						</MudButton>
+					</CellTemplate>
+				</TemplateColumn>
+				<TemplateColumn Title="Remove">
+					<CellTemplate>
+						<MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="(() => DeleteList(context.Item.Id))"></MudIconButton>
+					</CellTemplate>
+				</TemplateColumn>
+			</Columns>
+			<PagerContent>
+				<MudDataGridPager T="AssessmentsListDto" />
+			</PagerContent>
+		</MudDataGrid>
+	</ChildContent>
+</Card>
+
+@code {
+	/// <summary>
+	/// Collection of assessment lists retrieved from the API
+	/// </summary>
+	private List<AssessmentsListDto> assessmentListsItems = [];
+
+	/// <summary>
+	/// Initializes the component and loads assessment list data from the API
+	/// </summary>
+	/// <returns>A task representing the asynchronous operation</returns>
+	protected override async Task OnParametersSetAsync()
+	{
+		IsLoading = true;
+		Result<List<AssessmentsListDto>> assessmentLists = await _apiService.GetAssessmentsList();
+
+		if (assessmentLists is { IsSuccess: true, Value: not null })
+		{
+			assessmentListsItems = assessmentLists.Value;
+			assessmentListsItems.ForEach(x => x.DateAdded.ToLocalTime());
+		}
+		else
+			_snackbar.Add(assessmentLists.ErrorDescription ?? "Failed to load the list of assessments", Severity.Error);
+
+		IsLoading = false;
+	}
+
+	/// <summary>
+	/// Opens a dialog to view users assigned to the specified assessment list
+	/// </summary>
+	/// <param name="listId">The identifier of the assessment list</param>
+	/// <returns>A task representing the asynchronous operation</returns>
+	private Task ViewUsers(int listId)
+	{
+		DialogParameters<AssignedUsersDialog> parameters = new()
+		{
+			{ x => x.ListId, listId},
+			{ x => x.IsLogId, false},
+			{ x => x.ShowAddUsers, true},
+		};
+		DialogOptions options = new()
+		{
+			MaxWidth = MaxWidth.Large
+		};
+
+		return _dialogService.ShowAsync<AssignedUsersDialog>("Users Assigned To Assessment", parameters, options);
+	}
+
+	/// <summary>
+	/// Opens a dialog to view assessments within the specified assessment list
+	/// </summary>
+	/// <param name="listId">The identifier of the assessment list</param>
+	/// <param name="logs">The collection of assessment logs to display</param>
+	/// <returns>A task representing the asynchronous operation</returns>
+	private Task ViewAssessments(AssessmentsListDto list, List<AssessmentLogPartialDto> logs)
+	{
+		DialogParameters<AssessmentsInListDialog> parameters = new()
+		{
+			{ x => x.AssessmentList, list},
+			{ x => x.Logs, logs},
+		};
+
+		return _dialogService.ShowAsync<AssessmentsInListDialog>("Assessments", parameters);
+	}
+
+	/// <summary>
+	/// Deletes an assessment list after user confirmation
+	/// Removes the list from both the API and the local collection
+	/// </summary>
+	/// <param name="listId">The identifier of the assessment list to delete</param>
+	/// <returns>A task representing the asynchronous operation</returns>
+	private async Task DeleteList(int listId)
+	{
+		if (!await WebHelpers.ConfirmDeleteGeneric(_dialogService))
+			return;
+
+		Result<bool> res = await _apiService.RemoveList(listId);
+
+		if (res is { IsSuccess: false, Value: false })
+			_snackbar.Add(res.ErrorDescription ?? "Failed to to delete the assessment list", Severity.Error);
+
+		//remove from the in memory list
+		assessmentListsItems = assessmentListsItems.Where(x => x.Id != listId).ToList();
+	}
+}

@@ -1,0 +1,146 @@
+﻿@using Casimo.Web.Components.Facilities
+@inherits BaseDataComponent;
+
+<MudDialog ContentStyle="width:700px; height: 500px">
+	<DialogActions>
+		<MudButton Color="Color.Default" OnClick="Close" Variant="Variant.Filled">Close</MudButton>
+	</DialogActions>
+	<DialogContent>
+		<div style="min-width: 600px">
+			@if (IsAddingUser)
+			{
+				<section>
+					<MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => IsAddingUser = false)"></MudIconButton>
+					<div>
+						<InviteUser ListId="@ListId" ReloadList="LoadList" />
+					</div>
+				</section>
+			}
+			else
+			{
+				@if (ShowAddUsers)
+				{
+					<MudIconButton Icon="@Icons.Material.Filled.PersonAdd" OnClick="@(() => IsAddingUser = true)" Color="Color.Success" Variant="Variant.Filled"></MudIconButton>
+				}
+				<MudDataGrid Items="@Users" RowsPerPage="15" CurrentPage="1" Filterable="true" Loading=this.IsLoading Dense="true">
+					<Columns>
+						<PropertyColumn Property="x => x.Username" Title="Username" />
+						<PropertyColumn Property="x => x.RoleName" Ritle="User Type" />
+						<TemplateColumn Title="Edit" StickyRight="true">
+							<CellTemplate>
+								@if (ShowAddUsers)
+								{
+									<MudIconButton Icon="@Icons.Material.Filled.PersonRemove" Variant="Variant.Filled"
+												   Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveUserFromList(context.Item.casimoUserId))">
+									</MudIconButton>
+								}
+							</CellTemplate>
+						</TemplateColumn>
+					</Columns>
+					<PagerContent>
+						<MudDataGridPager T="UsersAssignedToAssessmentDto" />
+					</PagerContent>
+				</MudDataGrid>
+			}
+		</div>
+	</DialogContent>
+</MudDialog>
+
+@code {
+	/// <summary>
+	/// Gets or sets the MudBlazor dialog instance for managing dialog state
+	/// </summary>
+	[CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
+
+	/// <summary>
+	/// Gets or sets the identifier of the assessment list or assessment
+	/// </summary>
+	[Parameter] public int ListId { get; set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the ListId refers to an assessment log (true) or assessment list (false)
+	/// </summary>
+	[Parameter] public bool IsLogId { get; set; }
+
+	/// <summary>
+	/// Show add users
+	/// </summary>
+	[Parameter] public bool ShowAddUsers { get; set; }
+
+	/// <summary>
+	/// Collection of users assigned to the assessment or assessment list
+	/// </summary>
+	private UsersAssignedToAssessmentDto[] Users { get; set; } = [];
+
+	private bool IsAddingUser = false;
+
+
+	/// <summary>
+	/// Initializes the component and loads user assignment data based on the ListId and IsLogId parameters
+	/// </summary>
+	/// <returns>A task representing the asynchronous operation</returns>
+	protected override async Task OnParametersSetAsync()
+	{
+		await LoadList();
+	}
+
+
+	/// <summary>
+	/// Loads the list of users assigned to the assessment or assessment list
+	/// </summary>
+	/// <returns>A task representing the asynchronous operation</returns>
+	public async Task LoadList()
+	{
+		try
+		{
+			Result<UsersAssignedToAssessmentDto[]> result;
+			if (IsLogId)
+				result = await _apiService.GetUsersAssignedToAssessment(ListId);
+			else
+				result = await _apiService.GetUsersAssignedToList(ListId);
+
+			if (result.IsSuccess)
+				Users = result.Value ?? [];
+			else
+				_snackbar.Add(result.ErrorDescription ?? "Failed to load the list of assessments", Severity.Error);
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex.Message);
+		}
+
+		IsAddingUser = false;
+	}
+
+	/// <summary>
+	/// Removes a user from the assessment list and updates the UI
+	/// </summary>
+	/// <param name="userId">The user identifier to remove from the list</param>
+	/// <returns>A task representing the asynchronous operation</returns>
+	private async Task RemoveUserFromList(int userId)
+	{
+		this.IsLoading = true;
+		try
+		{
+			var delResult = await _apiService.RemoveUserFromAssessmentList(userId, ListId);
+			if (delResult.IsSuccess)
+				// Remove from the in memory list
+				Users = Users.Where(x => x.casimoUserId != userId).ToArray();
+			else
+				_snackbar.Add(delResult.ErrorDescription ?? "An Error Occurred While Removing the User from the List", Severity.Error);
+		}
+		catch (Exception)
+		{
+			throw;
+		}
+		finally
+		{
+			this.IsLoading = false;
+		}
+	}
+
+	/// <summary>
+	/// Closes the dialog and returns a successful result
+	/// </summary>
+	private void Close() => MudDialog.Close(DialogResult.Ok(true));
+}
