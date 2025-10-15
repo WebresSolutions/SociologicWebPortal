@@ -21,13 +21,11 @@ public static class EndpointsHelper
         if (res.Error is null)
             return Results.Ok(res.Value);
 
-        if (res.Error is ErrorType.NotFound)
-            return Results.NotFound(res.Error);
-
-        if (res.Error is ErrorType.BadRequest)
-            return Results.BadRequest(res.Error);
-
-        return res.Error is ErrorType.Unauthorized
+        return res.Error is ErrorType.NotFound
+            ? Results.NotFound(res.Error)
+            : res.Error is ErrorType.BadRequest
+            ? Results.BadRequest(res.Error)
+            : res.Error is ErrorType.Unauthorized
             ? Results.Unauthorized()
             : Results.InternalServerError(res.ErrorDescription ?? internalErrString);
     }

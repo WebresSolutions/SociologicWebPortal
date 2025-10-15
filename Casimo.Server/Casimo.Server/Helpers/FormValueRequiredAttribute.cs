@@ -1,7 +1,5 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc.Abstractions;
+﻿using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
-using Microsoft.AspNetCore.Routing;
 
 namespace Casimo.Server.Helpers;
 
@@ -47,11 +45,8 @@ public sealed class FormValueRequiredAttribute : ActionMethodSelectorAttribute
             return false;
         }
 
-        if (!context.HttpContext.Request.ContentType.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return !string.IsNullOrEmpty(context.HttpContext.Request.Form[_name]);
+        return !context.HttpContext.Request.ContentType.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
+            ? false
+            : !string.IsNullOrEmpty(context.HttpContext.Request.Form[_name]);
     }
 }

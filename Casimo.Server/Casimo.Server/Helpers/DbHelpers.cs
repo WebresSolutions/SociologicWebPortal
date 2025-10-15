@@ -33,7 +33,7 @@ public static class DbHelpers
         if (casimoUser is not null)
         {
             casimoUser.IdentityId = user.Id;
-            await casimoDB.SaveChangesAsync();
+            _ = await casimoDB.SaveChangesAsync();
             return;
         }
 
@@ -48,8 +48,8 @@ public static class DbHelpers
             IsTempUser = isTempUser
         };
 
-        await casimoDB.TblUsers.AddAsync(newUser);
-        await casimoDB.SaveChangesAsync();
+        _ = await casimoDB.TblUsers.AddAsync(newUser);
+        _ = await casimoDB.SaveChangesAsync();
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ public static class DbHelpers
         if (casimoUser is not null)
         {
             casimoUser.IdentityId = applicationUser.Id;
-            await casimoDB.SaveChangesAsync();
+            _ = await casimoDB.SaveChangesAsync();
             return casimoUser;
         }
 
@@ -83,8 +83,8 @@ public static class DbHelpers
             IdentityId = applicationUser.Id,
         };
 
-        await casimoDB.TblUsers.AddAsync(newUser);
-        await casimoDB.SaveChangesAsync();
+        _ = await casimoDB.TblUsers.AddAsync(newUser);
+        _ = await casimoDB.SaveChangesAsync();
         return newUser;
     }
 }

@@ -194,6 +194,7 @@ public static class Dependencies
                 builder => builder.WithOrigins(
                         "http://localhost:44310",      //Local port
                         "https://localhost:44310",
+                        "http://localhost:5173",
                         "https://casimo-portal-staging", // Staging environment
                         "https://casimo-portal.casimo.cloud" // Production environment
                     )

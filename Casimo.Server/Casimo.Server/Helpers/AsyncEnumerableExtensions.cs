@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace Casimo.Server.Helpers;
+﻿namespace Casimo.Server.Helpers;
 
 /// <summary>
 /// Extension methods for IAsyncEnumerable to provide additional functionality
@@ -20,16 +16,11 @@ public static class AsyncEnumerableExtensions
     /// <exception cref="ArgumentNullException">Thrown when source is null</exception>
     public static Task<List<T>> ToListAsync<T>(this IAsyncEnumerable<T> source)
     {
-        if (source == null)
-        {
-            throw new ArgumentNullException(nameof(source));
-        }
-
-        return ExecuteAsync();
+        return source == null ? throw new ArgumentNullException(nameof(source)) : ExecuteAsync();
 
         async Task<List<T>> ExecuteAsync()
         {
-            List<T> list = new List<T>();
+            List<T> list = [];
 
             await foreach (T element in source)
             {
