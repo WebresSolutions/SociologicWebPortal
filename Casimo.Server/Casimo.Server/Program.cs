@@ -4,7 +4,6 @@ using Casimo.Server.Controllers;
 using Casimo.Server.Extensions;
 using Casimo.Server.Helpers;
 using Casimo.Server.Strings;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 
 namespace Casimo.Server;
@@ -19,7 +18,7 @@ public class Program
     private static async Task Main(string[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-        builder.WebHost.UseUrls();
+        _ = builder.WebHost.UseUrls();
 
         Console.WriteLine($"Environment Name: '{builder.Environment.EnvironmentName}'");
         if (builder.Environment.EnvironmentName is not StaticStrings.IntegrationEnvName)
@@ -33,14 +32,10 @@ public class Program
             Console.WriteLine("Skipping databases and identity services for IntegrationTests");
         }
         builder.AddOtherServices();
-        builder.Services.Configure<ForwardedHeadersOptions>(options =>
-        {
-            options.ForwardedHeaders =
-                ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-        });
+
         WebApplication? app = builder.Build();
 
-        app.Use((context, next) =>
+        _ = app.Use((context, next) =>
         {
             if (context.Request.Scheme != "https")
             {
@@ -48,41 +43,42 @@ public class Program
             }
             return next(context);
         });
-        app.UseForwardedHeaders();
+        _ = app.UseForwardedHeaders();
 
         // Configure the HTTP request pipeline
-        if (!app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment())
         {
-            app.UseExceptionHandler("/Error");
-            app.UseHsts();
+            _ = app.UseDeveloperExceptionPage();
+            app.UseWebAssemblyDebugging();
+            _ = app.MapOpenApi();
         }
         else
         {
-            app.UseDeveloperExceptionPage();
-            app.UseWebAssemblyDebugging();
+            _ = app.UseExceptionHandler("/Error");
+            _ = app.UseHsts();
         }
 
         // Only use HTTPS redirection in development or when not behind a proxy
         if (!app.Environment.IsDevelopment())
         {
-            app.UseHttpsRedirection();
+            _ = app.UseHttpsRedirection();
         }
 
-        app.UseBlazorFrameworkFiles();
-        app.UseStaticFiles();
+        _ = app.UseBlazorFrameworkFiles();
+        _ = app.UseStaticFiles();
+        _ = app.UseRouting();
+        _ = app.UseCors("CorsPolicy");
 
-        app.UseRouting();
-        app.UseCors("CorsPolicy");
+        _ = app.UseAuthentication();
+        _ = app.UseAuthorization();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        app.MapRazorPages();
-        app.MapControllers();
-        app.MapFallbackToFile("index.html");
+        _ = app.MapRazorPages();
+        _ = app.MapControllers();
+        _ = app.MapFallbackToFile("index.html");
         app.AddFacilityEndpoints();
         app.AddFitForPurposeEndpoints();
         app.AddUserManagerEndpoints();
+        _ = app.MapGroup("/api/account").MapIdentityApi<ApplicationUser>();
 
 
         if (app.Environment.EnvironmentName is not StaticStrings.IntegrationEnvName)
