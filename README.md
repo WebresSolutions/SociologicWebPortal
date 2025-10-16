@@ -1,6 +1,4 @@
-# Casimo - Comprehensive Facility Management System
-
-A modern, full-stack facility management and assessment platform built with ASP.NET Core, Blazor WebAssembly, and Entity Framework Core.
+# Casimo Web Portal
 
 ## 🏗️ Project Architecture
 
@@ -221,16 +219,6 @@ docker run -d -p 8080:80 casimo:latest
 4. **Add** tests for new functionality
 5. **Submit** a pull request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-For support and questions:
-- **Issues**: Create a GitHub issue
-- **Documentation**: Check the project wiki
-- **Email**: [support@casimo.com](mailto:support@casimo.com)
 
 ---
 
