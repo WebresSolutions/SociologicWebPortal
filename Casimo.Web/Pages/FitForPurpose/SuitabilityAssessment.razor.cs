@@ -91,6 +91,11 @@ public partial class SuitabilityAssessment : IDisposable
     /// The selected tab
     /// </summary>
     private int selectedTab = 0;
+
+    /// <summary>
+    /// List of statuses
+    /// </summary>
+    private readonly AssessmentStatusEnum[] statuses = [.. Enum.GetValues<AssessmentStatusEnum>().Cast<AssessmentStatusEnum>()];
     #endregion
 
     /// <summary>

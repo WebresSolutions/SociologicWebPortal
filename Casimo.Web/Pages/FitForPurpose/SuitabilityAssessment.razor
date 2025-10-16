@@ -127,12 +127,19 @@
 
 						<AuthorizeView Roles=@($"{RoleConstants.FullUser}, {RoleConstants.AdminUser}") Context="authContext">
 							<MudTooltip Text="Save a draft and finish later">
-								<MudButton OnClick="@(() => SaveChanges(null))" Color="Color.Default"
+								<MudButton OnClick="@(() => SaveChanges(assessmentStatus))" Color="Color.Default"
 										   StartIcon="@Icons.Material.Filled.Save" Variant="Variant.Filled" Disabled=@IsLoading>
 									Save Changes
 								</MudButton>
 							</MudTooltip>
-							@if (assessment.StatusId is (int)AssessmentStatusEnum.AdminReview)
+							<MudSelect @bind-value="assessmentStatus" Label="Status" Class="mb-3 category-select"
+									   Variant="Variant.Outlined" FitContent="true" >
+								@foreach (AssessmentStatusEnum status in statuses)
+								{
+									<MudSelectItem Value="status">@status.GetDisplayName()</MudSelectItem>
+								}
+							</MudSelect>
+							@* @if (assessment.StatusId is (int)AssessmentStatusEnum.AdminReview)
 							{
 								<MudTooltip Text="Return to the user for review">
 									<MudButton OnClick="@(() => SaveChanges(AssessmentStatusEnum.UserReview))" Color="Color.Info"
@@ -149,7 +156,7 @@
 										Complete Assessment
 									</MudButton>
 								</MudTooltip>
-							}
+							} *@
 						</AuthorizeView>
 					}
 				</div>

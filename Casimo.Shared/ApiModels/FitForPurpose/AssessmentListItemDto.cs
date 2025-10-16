@@ -17,6 +17,11 @@ public class AssessmentListItemDto
     public string FacilityName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Facility Component
+    /// </summary>
+    public string FacilityComponent { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the description of the assessment template
     /// </summary>
     public string TemplateDescription { get; set; } = string.Empty;
@@ -60,4 +65,19 @@ public class AssessmentListItemDto
     /// Gets or sets the name of the last person to edit the assessment
     /// </summary>
     public string? LastEditedBy { get; set; }
+
+    /// <summary>
+    /// The date of the assessment
+    /// </summary>
+    public DateTime AssessmentDate { get; set; }
+
+    /// <summary>
+    /// Formatted string for display purposes
+    /// </summary>
+    public string FormattedString =>
+        @$"
+            Facility:({this.FacilityId}) {this.FacilityName} - {this.FacilityComponent}, 
+            Use: {this.Use},  
+            Template: {this.TemplateTitle}, 
+            Date: {this.AssessmentDate:dd/MM/yyyy}".TrimEnd().TrimStart();
 }

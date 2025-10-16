@@ -60,6 +60,8 @@ public class FitForPurposeService(CasimoDbContext _casimoDB, ILogger<FitForPurpo
                     LgAid = facility.Lgaid ?? "",
                     LastEdited = log.LastEdited,
                     LastEditedBy = log.LastEditedBy,
+                    AssessmentDate = log.AssessmentDate,
+                    FacilityComponent = facility.FacilityComponent ?? string.Empty,
                 }
                 ).ToListAsync();
 
@@ -678,7 +680,7 @@ public class FitForPurposeService(CasimoDbContext _casimoDB, ILogger<FitForPurpo
             }
 
             list.Active = false;
-            await _casimoDB.SaveChangesAsync();
+            _ = await _casimoDB.SaveChangesAsync();
 
             res.Value = true;
             return res;

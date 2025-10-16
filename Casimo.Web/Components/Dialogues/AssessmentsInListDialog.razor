@@ -194,7 +194,7 @@
 		// if text is null or empty, show complete list
 		if (string.IsNullOrEmpty(searchString))
 			return autoFillResults
-			.Select(x => ($"Title: {x.TemplateTitle}, Id: {x.AssessmentLogId}, Facility: {x.FacilityName}, FacilityId: {x.FacilityId}", x.AssessmentLogId))
+			.Select(x => (x.FormattedString, x.AssessmentLogId))
 			.Distinct();
 
 		return await Task.Run(() =>
@@ -204,7 +204,7 @@
 				x.AssessmentLogId.ToString().Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
 				x.FacilityName.Contains(searchString, StringComparison.InvariantCultureIgnoreCase) ||
 				x.FacilityId.ToString().Contains(searchString, StringComparison.InvariantCultureIgnoreCase))
-			.Select(x => (($"Title: {x.TemplateTitle}, Id: {x.AssessmentLogId}, Facility: {x.FacilityName}, FacilityId: {x.FacilityId}", x.AssessmentLogId))));
+			.Select(x => (x.FormattedString, x.AssessmentLogId)));
 	}
 
 	/// <summary>
