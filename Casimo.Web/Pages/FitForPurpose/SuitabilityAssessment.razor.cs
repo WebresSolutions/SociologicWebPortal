@@ -210,7 +210,7 @@ public partial class SuitabilityAssessment : IDisposable
 
         Result<AssessmentLogDetailDto> result = await _apiService.SaveQuestions(req);
 
-        if (result.IsSuccess)
+        if (result.IsSuccess && showConfirmation)
         {
             assessment = result.Value;
             if (sections is [] or null)
