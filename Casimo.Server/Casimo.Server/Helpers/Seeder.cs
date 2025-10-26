@@ -24,15 +24,15 @@ public static class Seeder
             // Create roles
             IdentityRole? adminRole = await roleManager.FindByNameAsync(RoleConstants.AdminUser);
             if (adminRole is null)
-                await roleManager.CreateAsync(new IdentityRole(RoleConstants.AdminUser));
+                _ = await roleManager.CreateAsync(new IdentityRole(RoleConstants.AdminUser));
 
             IdentityRole? CouncilRole = await roleManager.FindByNameAsync(RoleConstants.FullUser);
             if (CouncilRole is null)
-                await roleManager.CreateAsync(new IdentityRole(RoleConstants.FullUser));
+                _ = await roleManager.CreateAsync(new IdentityRole(RoleConstants.FullUser));
 
             IdentityRole? tempRole = await roleManager.FindByNameAsync(RoleConstants.TemporaryUser);
             if (tempRole is null)
-                await roleManager.CreateAsync(new IdentityRole(RoleConstants.TemporaryUser));
+                _ = await roleManager.CreateAsync(new IdentityRole(RoleConstants.TemporaryUser));
 
             string adminUserName = "admin@test.com";
             string councilUserName = "council@test.com";
@@ -50,12 +50,12 @@ public static class Seeder
                     PhoneNumber = "0452339178"
                 };
 
-                var userCreationResult = await userManager.CreateAsync(newUser, "Abc.123");
+                IdentityResult userCreationResult = await userManager.CreateAsync(newUser, "Abc.123");
 
                 if (!userCreationResult.Succeeded)
                 {
                     Console.WriteLine($"Failed to create user {adminUserName}:");
-                    foreach (var error in userCreationResult.Errors)
+                    foreach (IdentityError error in userCreationResult.Errors)
                     {
                         Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
                     }
@@ -74,7 +74,7 @@ public static class Seeder
                     if (!addToRoleResult.Succeeded)
                     {
                         Console.WriteLine($"Failed to add user {adminUser.UserName} to {RoleConstants.AdminUser} role:");
-                        foreach (var error in addToRoleResult.Errors)
+                        foreach (IdentityError error in addToRoleResult.Errors)
                         {
                             Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
                         }
@@ -105,7 +105,7 @@ public static class Seeder
                 if (!userCreationResult.Succeeded)
                 {
                     Console.WriteLine($"Failed to create user {councilUserName}:");
-                    foreach (var error in userCreationResult.Errors)
+                    foreach (IdentityError error in userCreationResult.Errors)
                     {
                         Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
                     }
@@ -120,7 +120,7 @@ public static class Seeder
                     if (!addToRoleResult.Succeeded)
                     {
                         Console.WriteLine($"Failed to add user {councilUser.UserName} to {RoleConstants.FullUser} role:");
-                        foreach (var error in addToRoleResult.Errors)
+                        foreach (IdentityError error in addToRoleResult.Errors)
                         {
                             Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
                         }
@@ -150,7 +150,7 @@ public static class Seeder
                 if (!userCreationResult.Succeeded)
                 {
                     Console.WriteLine($"Failed to create user {councilUserName}:");
-                    foreach (var error in userCreationResult.Errors)
+                    foreach (IdentityError error in userCreationResult.Errors)
                     {
                         Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
                     }
@@ -161,11 +161,11 @@ public static class Seeder
 
                 if (!await userManager.IsInRoleAsync(tempUser, RoleConstants.TemporaryUser))
                 {
-                    var addToRoleResult = await userManager.AddToRoleAsync(tempUser, RoleConstants.TemporaryUser);
+                    IdentityResult addToRoleResult = await userManager.AddToRoleAsync(tempUser, RoleConstants.TemporaryUser);
                     if (!addToRoleResult.Succeeded)
                     {
                         Console.WriteLine($"Failed to add user {councilUser.UserName} to {RoleConstants.TemporaryUser} role:");
-                        foreach (var error in addToRoleResult.Errors)
+                        foreach (IdentityError error in addToRoleResult.Errors)
                         {
                             Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
                         }

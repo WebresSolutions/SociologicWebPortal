@@ -3,6 +3,8 @@ name: Build and Push Image to ECR
 on:
   push:
     branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 env:
   # Your configured values

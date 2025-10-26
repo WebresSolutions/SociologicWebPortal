@@ -24,7 +24,7 @@ public static class UserManagerEndpoints
         RouteGroupBuilder userManagerGroup = app.MapGroup("api/UserManager");
 
         // Get all users (AdminUser only)
-        userManagerGroup.MapGet("/Users", async (
+        _ = userManagerGroup.MapGet("/Users", async (
             [FromServices] IUserManagerService userManagerService
         ) =>
         {
@@ -33,7 +33,7 @@ public static class UserManagerEndpoints
         }).RequireAuthorization(policy => policy.RequireRole(RoleConstants.AdminUser));
 
         // Get user details by ID (Admin only)
-        userManagerGroup.MapGet("/User/{userId}", async (
+        _ = userManagerGroup.MapGet("/User/{userId}", async (
             [FromServices] IUserManagerService userManagerService,
             [FromRoute] string userId
         ) =>
@@ -43,7 +43,7 @@ public static class UserManagerEndpoints
         }).RequireAuthorization(policy => policy.RequireRole(RoleConstants.AdminUser));
 
         // Update user details (AdminUser only)
-        userManagerGroup.MapPut("/User/{userId}", async (
+        _ = userManagerGroup.MapPut("/User/{userId}", async (
             [FromServices] IUserManagerService userManagerService,
             [FromRoute] string userId,
             [FromBody] ManageUserDetailsDto req
@@ -54,7 +54,7 @@ public static class UserManagerEndpoints
         }).RequireAuthorization(policy => policy.RequireRole(RoleConstants.AdminUser));
 
         // Create new user (AdminUser only)
-        userManagerGroup.MapPost("/User", async (
+        _ = userManagerGroup.MapPost("/User", async (
             [FromServices] IUserManagerService userManagerService,
             [FromBody] CreateUserDto req
         ) =>
@@ -67,7 +67,7 @@ public static class UserManagerEndpoints
         }).RequireAuthorization(policy => policy.RequireRole(RoleConstants.AdminUser));
 
         // Get all roles (AdminUser only)
-        userManagerGroup.MapGet("/Roles", async (
+        _ = userManagerGroup.MapGet("/Roles", async (
             [FromServices] IUserManagerService userManagerService
         ) =>
         {
@@ -76,7 +76,7 @@ public static class UserManagerEndpoints
         }).RequireAuthorization(policy => policy.RequireRole(RoleConstants.AdminUser));
 
         // Invite user to assessment list
-        userManagerGroup.MapPost("/InviteUserToAssessmentList", async (
+        _ = userManagerGroup.MapPost("/InviteUserToAssessmentList", async (
             [FromServices] IUserManagerService userManagerService,
             [FromBody] UserAssessmentListInvite req
         ) =>
@@ -86,7 +86,7 @@ public static class UserManagerEndpoints
         }).RequireAuthorization();
 
         // Remove user from assessment list
-        userManagerGroup.MapDelete("/RemoveUserFromList/{userId}/{listId}", async (
+        _ = userManagerGroup.MapDelete("/RemoveUserFromList/{userId}/{listId}", async (
             [FromServices] IUserManagerService userManagerService,
             [FromRoute] int userId,
             [FromRoute] int listId
@@ -96,7 +96,7 @@ public static class UserManagerEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to remove the user from the list");
         }).RequireAuthorization();
 
-        userManagerGroup.MapPost("/ImportUsers", async (
+        _ = userManagerGroup.MapPost("/ImportUsers", async (
             [FromServices] IUserManagerService userManagerService
             ) =>
         {

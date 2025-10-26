@@ -125,7 +125,7 @@ public class AuthorizationController(
                     roleType: Claims.Role);
 
                 // Add the claims that will be persisted in the tokens.
-                identity.SetClaim(Claims.Subject, await _userManager.GetUserIdAsync(user))
+                _ = identity.SetClaim(Claims.Subject, await _userManager.GetUserIdAsync(user))
                         .SetClaim(Claims.Email, await _userManager.GetEmailAsync(user))
                         .SetClaim(Claims.Name, await _userManager.GetUserNameAsync(user))
                         .SetClaim(Claims.PreferredUsername, await _userManager.GetUserNameAsync(user))
@@ -134,8 +134,8 @@ public class AuthorizationController(
                 // Note: in this sample, the granted scopes match the requested scope
                 // but you may want to allow the user to uncheck specific scopes.
                 // For that, simply restrict the list of scopes before calling SetScopes.
-                identity.SetScopes(request.GetScopes());
-                identity.SetResources(await _scopeManager.ListResourcesAsync(identity.GetScopes()).ToListAsync());
+                _ = identity.SetScopes(request.GetScopes());
+                _ = identity.SetResources(await _scopeManager.ListResourcesAsync(identity.GetScopes()).ToListAsync());
 
                 // Automatically create a permanent authorization to avoid requiring explicit consent
                 // for future authorization or token requests containing the same scopes.
@@ -147,8 +147,8 @@ public class AuthorizationController(
                     type: AuthorizationTypes.Permanent,
                     scopes: identity.GetScopes());
 
-                identity.SetAuthorizationId(await _authorizationManager.GetIdAsync(authorization));
-                identity.SetDestinations(GetDestinations);
+                _ = identity.SetAuthorizationId(await _authorizationManager.GetIdAsync(authorization));
+                _ = identity.SetDestinations(GetDestinations);
 
                 return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
 
@@ -220,7 +220,7 @@ public class AuthorizationController(
             roleType: Claims.Role);
 
         // Add the claims that will be persisted in the tokens.
-        identity.SetClaim(Claims.Subject, await _userManager.GetUserIdAsync(user))
+        _ = identity.SetClaim(Claims.Subject, await _userManager.GetUserIdAsync(user))
                 .SetClaim(Claims.Email, await _userManager.GetEmailAsync(user))
                 .SetClaim(Claims.Name, await _userManager.GetUserNameAsync(user))
                 .SetClaim(Claims.PreferredUsername, await _userManager.GetUserNameAsync(user))
@@ -229,8 +229,8 @@ public class AuthorizationController(
         // Note: in this sample, the granted scopes match the requested scope
         // but you may want to allow the user to uncheck specific scopes.
         // For that, simply restrict the list of scopes before calling SetScopes.
-        identity.SetScopes(request.GetScopes());
-        identity.SetResources(await _scopeManager.ListResourcesAsync(identity.GetScopes()).ToListAsync());
+        _ = identity.SetScopes(request.GetScopes());
+        _ = identity.SetResources(await _scopeManager.ListResourcesAsync(identity.GetScopes()).ToListAsync());
 
         // Automatically create a permanent authorization to avoid requiring explicit consent
         // for future authorization or token requests containing the same scopes.
@@ -242,8 +242,8 @@ public class AuthorizationController(
             type: AuthorizationTypes.Permanent,
             scopes: identity.GetScopes());
 
-        identity.SetAuthorizationId(await _authorizationManager.GetIdAsync(authorization));
-        identity.SetDestinations(GetDestinations);
+        _ = identity.SetAuthorizationId(await _authorizationManager.GetIdAsync(authorization));
+        _ = identity.SetDestinations(GetDestinations);
 
         // Returning a SignInResult will ask OpenIddict to issue the appropriate access/identity tokens.
         return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
@@ -253,10 +253,16 @@ public class AuthorizationController(
     [HttpPost("~/connect/authorize"), ValidateAntiForgeryToken]
     // Notify OpenIddict that the authorization grant has been denied by the resource owner
     // to redirect the user agent to the client application using the appropriate response_mode.
-    public IActionResult Deny() => Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+    public IActionResult Deny()
+    {
+        return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+    }
 
     [HttpGet("~/connect/logout")]
-    public IActionResult Logout() => View();
+    public IActionResult Logout()
+    {
+        return View();
+    }
 
     [ActionName(nameof(Logout)), HttpPost("~/connect/logout"), ValidateAntiForgeryToken]
     public async Task<IActionResult> LogoutPost()
@@ -321,13 +327,13 @@ public class AuthorizationController(
 
         // Override the user claims present in the principal in case they
         // changed since the authorization code/refresh token was issued.
-        identity.SetClaim(Claims.Subject, await _userManager.GetUserIdAsync(user))
+        _ = identity.SetClaim(Claims.Subject, await _userManager.GetUserIdAsync(user))
             .SetClaim(Claims.Email, await _userManager.GetEmailAsync(user))
             .SetClaim(Claims.Name, await _userManager.GetUserNameAsync(user))
             .SetClaim(Claims.PreferredUsername, await _userManager.GetUserNameAsync(user))
             .SetClaims(Claims.Role, [.. await _userManager.GetRolesAsync(user)]);
 
-        identity.SetDestinations(GetDestinations);
+        _ = identity.SetDestinations(GetDestinations);
 
         // Returning a SignInResult will ask OpenIddict to issue the appropriate access/identity tokens.
         return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);

@@ -24,7 +24,7 @@ public static class FitForPurposeEndpoints
     {
         RouteGroupBuilder fitForPurposeMappingGroup = app.MapGroup("api/SuitabilityAssessment");
 
-        fitForPurposeMappingGroup.MapGet("/All", async (
+        _ = fitForPurposeMappingGroup.MapGet("/All", async (
             [FromServices] IFitForPurposeService ffpService,
             HttpContext httpContext
         ) =>
@@ -33,7 +33,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to get the assessment list");
         }).RequireAuthorization();
 
-        fitForPurposeMappingGroup.MapGet("/{Id}", async (
+        _ = fitForPurposeMappingGroup.MapGet("/{Id}", async (
             [FromServices] IFitForPurposeService ffpService,
             [FromRoute] int id,
             HttpContext httpContext
@@ -43,7 +43,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to get the assessment details");
         }).RequireAuthorization();
 
-        fitForPurposeMappingGroup.MapGet("UserAssessments/{userId}", async (
+        _ = fitForPurposeMappingGroup.MapGet("UserAssessments/{userId}", async (
             [FromServices] IFitForPurposeService ffpService,
             HttpContext httpContext,
             [FromRoute] int userId
@@ -53,7 +53,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to get user assessments");
         }).RequireAuthorization();
 
-        fitForPurposeMappingGroup.MapPost("/SaveQuestionResponse", async (
+        _ = fitForPurposeMappingGroup.MapPost("/SaveQuestionResponse", async (
             [FromServices] IFitForPurposeService ffpService,
             [FromBody] SaveQuestionResListDto req,
             HttpContext httpContext
@@ -67,7 +67,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to save question responses");
         }).RequireAuthorization();
 
-        fitForPurposeMappingGroup.MapGet("/AssessmentList", async (
+        _ = fitForPurposeMappingGroup.MapGet("/AssessmentList", async (
             [FromServices] IFitForPurposeService ffpService,
             [FromQuery] bool? showActiveOnly,
             HttpContext httpContext
@@ -78,7 +78,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to get the assessment list");
         }).RequireAuthorization();
 
-        fitForPurposeMappingGroup.MapGet("/UsersAssignedToLog/{logID}", async (
+        _ = fitForPurposeMappingGroup.MapGet("/UsersAssignedToLog/{logID}", async (
             [FromServices] IFitForPurposeService ffpService,
             [FromRoute] int logID,
             HttpContext httpContext
@@ -92,7 +92,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to get users assigned to assessment");
         }).RequireAuthorization();
 
-        fitForPurposeMappingGroup.MapGet("/UsersAssignedToList/{listID}", async (
+        _ = fitForPurposeMappingGroup.MapGet("/UsersAssignedToList/{listID}", async (
             [FromServices] IFitForPurposeService ffpService,
             [FromRoute] int listID,
             HttpContext httpContext
@@ -105,7 +105,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to get users assigned to list");
         }).RequireAuthorization();
 
-        fitForPurposeMappingGroup.MapPost("/AssessmentList", async (
+        _ = fitForPurposeMappingGroup.MapPost("/AssessmentList", async (
             [FromServices] IFitForPurposeService ffpService,
             [FromBody] AssessmentListRequestDto req,
             HttpContext httpContext
@@ -128,7 +128,7 @@ public static class FitForPurposeEndpoints
             return EndpointsHelper.ProcessResult(res, "Failed to save assessment list");
         }).RequireAuthorization(policy => policy.RequireRole(RoleConstants.AdminUser, RoleConstants.FullUser));
 
-        fitForPurposeMappingGroup.MapDelete("/AssessmentList/{id}", async (
+        _ = fitForPurposeMappingGroup.MapDelete("/AssessmentList/{id}", async (
             [FromServices] IFitForPurposeService ffpService,
             [FromRoute] int id
             ) =>

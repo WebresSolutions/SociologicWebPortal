@@ -25,7 +25,7 @@ public static class FacilitiesEndpoints
         RouteGroupBuilder facilitiesGroup = app.MapGroup("api/Facilities");
 
         // Get all of the facililities
-        facilitiesGroup.MapGet(
+        _ = facilitiesGroup.MapGet(
                 "/All",
         async ([FromServices] IFacilityService facilitiesService,
             [FromQuery] int page,
@@ -44,7 +44,7 @@ public static class FacilitiesEndpoints
             .RequireAuthorization();
 
         // Get a specific facility by its ID
-        facilitiesGroup.MapGet(
+        _ = facilitiesGroup.MapGet(
                 "/{facilityId}",
         async (
             [FromServices] IFacilityService facilitiesService,
@@ -59,7 +59,7 @@ public static class FacilitiesEndpoints
                 })
             .RequireAuthorization();
 
-        facilitiesGroup.MapPost("",
+        _ = facilitiesGroup.MapPost("",
         async (
             [FromServices] IFacilityService facilitiesService,
             [FromBody] FacilityDetailsDto req) =>

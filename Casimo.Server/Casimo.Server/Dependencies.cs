@@ -19,27 +19,26 @@ namespace Casimo.Server;
 /// </summary>
 public static class Dependencies
 {
-
     public static void AddDatabases(this WebApplicationBuilder builder)
     {
         Console.WriteLine("Using ENV: " + builder.Environment.EnvironmentName);
         string authConnectionString = builder.Configuration.GetConnectionString("AuthConnection")
             ?? throw new Exception("Connection string 'AuthConnection' not found.");
 
-        builder.Services.AddDbContext<AuthDBContext>(options =>
+        _ = builder.Services.AddDbContext<AuthDBContext>(options =>
         {
             // Configure the context to use SQL Server
-            options.UseSqlServer(authConnectionString, x => x.MigrationsAssembly("Casimo.Data"));
+            _ = options.UseSqlServer(authConnectionString, x => x.MigrationsAssembly("Casimo.Data"));
             // Register the entity sets needed by OpenIddict
-            options.UseOpenIddict();
+            _ = options.UseOpenIddict();
         });
 
         string casimoConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
             ?? throw new Exception("Connection string 'DefaultConnection' not found.");
-        builder.Services.AddDbContext<CasimoDbContext>(options => options.UseSqlServer(casimoConnectionString, serverOptions =>
+        _ = builder.Services.AddDbContext<CasimoDbContext>(options => options.UseSqlServer(casimoConnectionString, serverOptions =>
         {
-            serverOptions.TranslateParameterizedCollectionsToConstants(); // Enable optimization for SQL WHERE IN clauses otherwise was not working correctly 
-            serverOptions.EnableRetryOnFailure(
+            _ = serverOptions.TranslateParameterizedCollectionsToConstants(); // Enable optimization for SQL WHERE IN clauses otherwise was not working correctly 
+            _ = serverOptions.EnableRetryOnFailure(
                 maxRetryCount: 3,
                 maxRetryDelay: TimeSpan.FromSeconds(30),
                 errorNumbersToAdd: null);
@@ -56,90 +55,90 @@ public static class Dependencies
     /// <param name="builder">The web application builder to configure</param>
     public static void AddIdentityServices(this WebApplicationBuilder builder)
     {
-        builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("EmailOptions"));
-        builder.Services.Configure<ClientOptions>(builder.Configuration.GetSection("ClientOptions"));
+        _ = builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("EmailOptions"));
+        _ = builder.Services.Configure<ClientOptions>(builder.Configuration.GetSection("ClientOptions"));
 
         // Register the Identity services
-        builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+        _ = builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
             .AddEntityFrameworkStores<AuthDBContext>()
             .AddDefaultTokenProviders()
             .AddDefaultUI();
 
-        builder.Services.ConfigureApplicationCookie(options =>
+        _ = builder.Services.ConfigureApplicationCookie(options =>
         {
             options.ExpireTimeSpan = TimeSpan.FromHours(24);
             options.SlidingExpiration = false;
         });
 
         // OpenIddict offers native integration with Quartz.NET for scheduled tasks
-        builder.Services.AddQuartz(options =>
+        _ = builder.Services.AddQuartz(options =>
         {
             options.UseSimpleTypeLoader();
             options.UseInMemoryStore();
         });
 
         // Register the Quartz.NET service
-        builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+        _ = builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 
         // Check if we're in a proxy environment (staging/production behind Cloudflare)
         bool isBehindProxy = builder.Environment.IsStaging() || builder.Environment.IsProduction();
 
-        builder.Services.AddOpenIddict()
+        _ = builder.Services.AddOpenIddict()
             // Register the OpenIddict core components
             .AddCore(options =>
             {
                 // Configure OpenIddict to use the Entity Framework Core stores and models
-                options.UseEntityFrameworkCore()
+                _ = options.UseEntityFrameworkCore()
                        .UseDbContext<AuthDBContext>();
 
                 // Enable Quartz.NET integration
-                options.UseQuartz();
+                _ = options.UseQuartz();
             })
             // Register the OpenIddict client components
             .AddClient(options =>
             {
                 // Allow authorization code flow
-                options.AllowAuthorizationCodeFlow();
+                _ = options.AllowAuthorizationCodeFlow();
 
                 // Register the signing and encryption credentials
-                options.AddDevelopmentEncryptionCertificate()
+                _ = options.AddDevelopmentEncryptionCertificate()
                        .AddDevelopmentSigningCertificate();
 
                 // Register the ASP.NET Core host and configure options
-                options.UseAspNetCore()
+                _ = options.UseAspNetCore()
                        .EnableStatusCodePagesIntegration()
                        .EnableRedirectionEndpointPassthrough();
 
                 // Register the System.Net.Http integration
-                options.UseSystemNetHttp()
+                _ = options.UseSystemNetHttp()
                        .SetProductInformation(typeof(Program).Assembly);
 
                 // Configure redirection endpoint manually (required for authorization code flow)
                 // This replaces UseWebProviders() when you don't want external providers
-                options.SetRedirectionEndpointUris("/callback/login/");
+                _ = options.SetRedirectionEndpointUris("/callback/login/");
             })
             // Register the OpenIddict server components
             .AddServer(options =>
             {
                 // Enable endpoints
-                options.SetAuthorizationEndpointUris("connect/authorize")
+                _ = options.SetAuthorizationEndpointUris("connect/authorize")
                        .SetEndSessionEndpointUris("connect/logout")
                        .SetTokenEndpointUris("connect/token")
                        .SetUserInfoEndpointUris("connect/userinfo");
 
                 // Register scopes
-                options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
+                _ = options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
 
                 // Configure flows
-                options.AllowAuthorizationCodeFlow()
+                _ = options.AllowAuthorizationCodeFlow()
                        .AllowRefreshTokenFlow();
 
                 // Register credentials
-                options.AddDevelopmentEncryptionCertificate()
+                _ = options.AddDevelopmentEncryptionCertificate()
                        .AddDevelopmentSigningCertificate();
 
                 // Configure ASP.NET Core options
-                options.UseAspNetCore()
+                _ = options.UseAspNetCore()
                        .EnableAuthorizationEndpointPassthrough()
                        .EnableEndSessionEndpointPassthrough()
                        .EnableStatusCodePagesIntegration()
@@ -148,13 +147,13 @@ public static class Dependencies
             // Register the OpenIddict validation components
             .AddValidation(options =>
             {
-                options.UseLocalServer();
-                options.UseAspNetCore();
+                _ = options.UseLocalServer();
+                _ = options.UseAspNetCore();
             });
-        builder.Services.AddHostedService<Worker>();
+        _ = builder.Services.AddHostedService<Worker>();
 
         // Add some policies
-        builder.Services.AddAuthorizationBuilder()
+        _ = builder.Services.AddAuthorizationBuilder()
             // Add some policies
             .AddPolicy(PolicyConstants.AdminOnly, policy => policy.RequireRole(RoleConstants.AdminUser))
             // Add some policies
@@ -171,26 +170,26 @@ public static class Dependencies
     /// <param name="builder">The web application builder to configure</param>
     public static void AddOtherServices(this WebApplicationBuilder builder)
     {
-        builder.WebHost.UseStaticWebAssets();
+        _ = builder.WebHost.UseStaticWebAssets();
 
         string smtp2Go = builder.Configuration.GetValue<string>("SMPT2GO")
             ?? throw new Exception("Could not find the smtp 2 go api key");
 
         // Add the custom services
-        builder.Services.AddSingleton<IApiService, Smtp2GoApiService>(x => new Smtp2GoApiService(smtp2Go));
-        builder.Services.AddScoped<IFacilityService, FacilityService>();
-        builder.Services.AddScoped<IFitForPurposeService, FitForPurposeService>();
-        builder.Services.AddScoped<IUserManagerService, UserManagerService>();
-        builder.Services.AddScoped<IEmailSender, EmailSender>();
-        builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
-        builder.Services.Configure<MagicLinkOptions>(builder.Configuration.GetSection("MagicLink"));
+        _ = builder.Services.AddSingleton<IApiService, Smtp2GoApiService>(x => new Smtp2GoApiService(smtp2Go));
+        _ = builder.Services.AddScoped<IFacilityService, FacilityService>();
+        _ = builder.Services.AddScoped<IFitForPurposeService, FitForPurposeService>();
+        _ = builder.Services.AddScoped<IUserManagerService, UserManagerService>();
+        _ = builder.Services.AddScoped<IEmailSender, EmailSender>();
+        _ = builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
+        _ = builder.Services.Configure<MagicLinkOptions>(builder.Configuration.GetSection("MagicLink"));
 
-        builder.Services.AddControllersWithViews();
-        builder.Services.AddRazorPages();
-        builder.Services.AddCors(options =>
+        _ = builder.Services.AddControllersWithViews();
+        _ = builder.Services.AddRazorPages();
+        _ = builder.Services.AddCors(options =>
         {
             options.AddPolicy("CorsPolicy",
-                builder => builder.WithOrigins( 
+                builder => builder.WithOrigins(
                         "http://localhost:44310",      //Local port
                         "https://localhost:44310",
                         "https://casimo-portal-staging", // Staging environment
