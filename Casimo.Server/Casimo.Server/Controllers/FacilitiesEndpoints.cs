@@ -79,5 +79,21 @@ public static class FacilitiesEndpoints
             return EndpointsHelper.ProcessResult(res, "An Error occurred while loading facility details");
         })
         .RequireAuthorization(PolicyConstants.AdminOnly);
+
+        _ = facilitiesGroup.MapGet(
+            "/LGAids",
+            async ([FromServices] IFacilityService facilitiesService) =>
+            {
+                LGAidCounts[] lgaIdCounts = await facilitiesService.GetLgAids();
+                return Results.Ok(lgaIdCounts);
+            });
+
+        _ = facilitiesGroup.MapGet(
+            "/LGAid",
+            async ([FromServices] IFacilityService facilitiesService, [FromQuery] string lgAid) =>
+            {
+                FacilityCoords[] lgaIdCounts = await facilitiesService.GetLgAidFacility(lgAid);
+                return Results.Ok(lgaIdCounts);
+            });
     }
 }

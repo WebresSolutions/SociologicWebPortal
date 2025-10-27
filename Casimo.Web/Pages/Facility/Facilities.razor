@@ -4,6 +4,7 @@
 @using Casimo.Shared.ApiModels.Facility
 @using Casimo.Shared.Constants
 @using Casimo.Web.Components
+
 @using Casimo.Web.Helpers
 @using Casimo.Web.Services.Interfaces
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
@@ -12,47 +13,50 @@
 @attribute [Authorize(Roles = $"{RoleConstants.FullUser}, {RoleConstants.AdminUser}")]
 
 <Card Title="Facilities">
-    <ChildContent>
-        <MudDataGrid T="FacilityListItemDto"
-                     ServerData="LoadFacilitiesServerData"
-                     Filterable="true"
-                     SortMode="SortMode.Single"
-                     Loading="base.IsLoading"
-                     RowsPerPage="_rowsPerPage"
-                     RowsPerPageValues="@(new int[] { 10, 25, 50, 100 })"
-                     Dense=true
-                     @ref="_grid">
-            <ToolBarContent>
-                <MudTextField T="string" ValueChanged="@(s=> OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </ToolBarContent>
-            <Columns>
-                <TemplateColumn  StickyLeft="true" >
-                    <CellTemplate>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => ViewFacilty(context.Item.FacilityId))" StartIcon="@Icons.Material.Filled.RemoveRedEye">View</MudButton>
-                    </CellTemplate>
-                </TemplateColumn>
-                <PropertyColumn Property="x => x.LgAid" HeaderStyle="max-width: 75px" ShowFilterIcon="false"/>
-                <PropertyColumn Property="x => x.SiteName" Title="Site Name" ShowFilterIcon="false"/>
-                <PropertyColumn Property="x => x.Address" ShowFilterIcon="false" />
-                <PropertyColumn Property="x => x.PostCode" Title="Post Code" ShowFilterIcon="false" HeaderStyle="max-width: 75px" />
-                <PropertyColumn Property="x => x.Settlement" ShowFilterIcon="false" />
-                <PropertyColumn Property="x => x.Owner" ShowFilterIcon="false" />
-                <PropertyColumn Property="x => x.Operator" ShowFilterIcon="false" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="FacilityListItemDto" />
-            </PagerContent>
-        </MudDataGrid>
-    </ChildContent>
+	<ChildContent>
+		<div class="d-flex flex-column gap-4">
+			<MudDataGrid T="FacilityListItemDto"
+						 ServerData="LoadFacilitiesServerData"
+						 Filterable="true"
+						 SortMode="SortMode.Single"
+						 Loading="base.IsLoading"
+						 RowsPerPage="_rowsPerPage"
+						 RowsPerPageValues="@(new int[] { 10, 25, 50, 100 })"
+						 Dense=true
+						 @ref="_grid">
+				<ToolBarContent>
+					<MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+								  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+				</ToolBarContent>
+				<Columns>
+					<TemplateColumn StickyLeft="true">
+						<CellTemplate>
+							<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => ViewFacilty(context.Item.FacilityId))" StartIcon="@Icons.Material.Filled.RemoveRedEye">View</MudButton>
+						</CellTemplate>
+					</TemplateColumn>
+					<PropertyColumn Property="x => x.LgAid" HeaderStyle="max-width: 75px" ShowFilterIcon="false" />
+					<PropertyColumn Property="x => x.SiteName" Title="Site Name" ShowFilterIcon="false" />
+					<PropertyColumn Property="x => x.Address" ShowFilterIcon="false" />
+					<PropertyColumn Property="x => x.PostCode" Title="Post Code" ShowFilterIcon="false" HeaderStyle="max-width: 75px" />
+					<PropertyColumn Property="x => x.Settlement" ShowFilterIcon="false" />
+					<PropertyColumn Property="x => x.Owner" ShowFilterIcon="false" />
+					<PropertyColumn Property="x => x.Operator" ShowFilterIcon="false" />
+				</Columns>
+				<PagerContent>
+					<MudDataGridPager T="FacilityListItemDto" />
+				</PagerContent>
+			</MudDataGrid>
+			<MapView />
+		</div>
+	</ChildContent>
 </Card>
 
 
 <style>
-    .usermanager-header {
-        display: flex;
-        justify-content: space-between;
-    }
+	.usermanager-header {
+		display: flex;
+		justify-content: space-between;
+	}
 </style>
 
 

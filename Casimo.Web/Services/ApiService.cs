@@ -549,5 +549,62 @@ public class ApiService(HttpClient _httpClient) : IApiService
         }
         return res;
     }
+
+    /// <summary>
+    /// Gets a list of LGAids and their counts
+    /// </summary>
+    /// <returns></returns>
+    public async Task<Result<LGAidCounts[]>> GetLgAids()
+    {
+        Result<LGAidCounts[]> res = new();
+        try
+        {
+            LGAidCounts[]? response = await _httpClient.GetFromJsonAsync<LGAidCounts[]>($"api/Facilities/LGAids");
+            if (response is not null)
+            {
+                res.Value = response;
+            }
+            else
+            {
+                res.ErrorDescription = "Failed to get the LGAid counts";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            // Handle exception
+        }
+        return res;
+    }
+
+    public async Task<Result<FacilityCoords[]>> GetFacilitesForLgAId(string lgAid)
+    {
+        Dictionary<string, string> queryParameters = new()
+            {
+                { "lgAid", lgAid},
+            };
+
+        string querystring = await new FormUrlEncodedContent(queryParameters).ReadAsStringAsync();
+
+        Result<FacilityCoords[]> res = new();
+        try
+        {
+            FacilityCoords[]? response = await _httpClient.GetFromJsonAsync<FacilityCoords[]>($"api/Facilities/LGAid?{querystring}");
+            if (response is not null)
+            {
+                res.Value = response;
+            }
+            else
+            {
+                res.ErrorDescription = "Failed to get the LGAid counts";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            // Handle exception
+        }
+        return res;
+    }
 }
 

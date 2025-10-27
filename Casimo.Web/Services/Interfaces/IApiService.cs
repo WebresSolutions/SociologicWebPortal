@@ -134,4 +134,17 @@ public interface IApiService
     /// <param name="listId">Remove a list. Will remove all users from that list and delete</param>
     /// <returns>Bool if success</returns>
     Task<Result<bool>> RemoveList(int listId);
+
+    /// <summary>
+    /// Gets a list of lgaids and their counts
+    /// </summary>
+    /// <returns></returns>
+    Task<Result<LGAidCounts[]>> GetLgAids();
+
+    /// <summary>
+    /// Gets facilities for a specific lgAid
+    /// </summary>
+    /// <param name="lgAid">The lgAid filter</param>
+    /// <returns>A list of facilities and their lgaid</returns>
+    Task<Result<FacilityCoords[]>> GetFacilitesForLgAId(string lgAid);
 }

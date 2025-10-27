@@ -207,8 +207,7 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
             facility.YLatitude = req.Coordinates?.Latitude;
             facility.XLongitude = req.Coordinates?.Longitude;
 
-
-            await _casimoDbContext.SaveChangesAsync();
+            _ = await _casimoDbContext.SaveChangesAsync();
 
             // Return the updated factility details
             return await GetFacility(facility.FacilityId);
@@ -220,4 +219,31 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
             return result;
         }
     }
+
+    /// <summary>
+    /// Gets all distinct LGA IDs from the facilities
+    /// </summary>
+    /// <returns></returns>
+    public async Task<LGAidCounts[]> GetLgAids() => await _casimoDbContext.TblFacilities
+        .Where(x => x.Lgaid != null && x.XLongitude != null && x.YLatitude != null)
+        .OrderByDescending(x => x.Lgaid)
+        .GroupBy(x => x.Lgaid)
+        .Select(x => new LGAidCounts(x.Key!, x.Count()))
+        .ToArrayAsync();
+
+    /// <summary>
+    /// Retrieves the coordinates of all facilities associated with the specified LG Aid identifier.
+    /// </summary>
+    /// <param name="lgAid">The LG Aid identifier used to locate associated facilities. Cannot be null or empty.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains an array of facility coordinates
+    /// associated with the specified LG Aid. The array will be empty if no facilities are found.</returns>
+    public async Task<FacilityCoords[]> GetLgAidFacility(string lgAid) => await _casimoDbContext.TblFacilities
+            .Where(x => x.Lgaid == lgAid && x.XLongitude != null && x.YLatitude != null)
+            .OrderBy(x => x.FacilitySite)
+            .Select(x => new FacilityCoords(
+                x.FacilityId,
+                x.FacilitySite ?? "",
+                x.XLongitude!.Value,
+                x.YLatitude!.Value))
+            .ToArrayAsync();
 }
