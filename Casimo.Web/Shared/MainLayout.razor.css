@@ -2,11 +2,16 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    overflow-x: hidden;
 }
 
 .main {
     flex: 1;
     border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -38,7 +43,15 @@
     }
 
 .content {
-    min-height: 100vh;
+    overflow-y: auto;
+    flex: 1;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-body {
+    flex: 1;
 }
 
 footer {
@@ -92,5 +105,12 @@ footer {
     .main > div {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
+    }
+
+    .content {
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
     }
 }

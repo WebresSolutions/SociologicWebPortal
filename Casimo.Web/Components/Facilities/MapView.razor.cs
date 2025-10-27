@@ -80,6 +80,8 @@ public partial class MapView : IDisposable
         if (facilitiesResult.IsSuccess && facilitiesResult.Value is not null)
             facilities = facilitiesResult.Value;
 
+        await ClearMarkers();
+
         if (facilities.Length > 100)
             await LoadMapMarkersClustered();
         else
@@ -96,23 +98,6 @@ public partial class MapView : IDisposable
         {
             if (map?.InteropObject is null)
                 return;
-
-            await ClearMarkers();
-
-            // Dispose of the existing MarkerClustering instance if one exists (necessary on reload)
-            if (markerClustering is not null)
-            {
-                await markerClustering.ClearMarkers();
-                await markerClustering.DisposeAsync();
-                markerClustering = null;
-            }
-
-            // Clear existing markers (parallel and clean)
-            if (markers.Count > 0)
-            {
-                await Task.WhenAll(markers.Select(m => m.SetMap(null)));
-                markers.Clear();
-            }
 
             if (facilities.Length == 0)
                 return;
@@ -176,16 +161,10 @@ public partial class MapView : IDisposable
             if (map?.InteropObject is null)
                 return;
 
-            if (markerClustering is not null)
-                await markerClustering.ClearMarkers();
-            // Clear existing markers in parallel
-            bounds = await LatLngBounds.CreateAsync(map.JsRuntime);
-            await ClearMarkers();
-
             if (facilities.Length == 0)
                 return;
 
-            // Batch create markers without awaiting each one
+            bounds = await LatLngBounds.CreateAsync(map.JsRuntime);
             List<Task<AdvancedMarkerElement>> markerTasks = new(facilities.Length);
 
             foreach (FacilityCoords facility in facilities)
@@ -194,34 +173,31 @@ public partial class MapView : IDisposable
                 double lng = facility.longitude;
                 LatLngLiteral latLng = new(lat, lng);
                 string content = WebHelpers.FormatCoordinate(facility.Name);
-                // Start marker creation (don't await yet)
+
                 Task<AdvancedMarkerElement> markerTask = AdvancedMarkerElement.CreateAsync(map.JsRuntime, new AdvancedMarkerElementOptions()
                 {
                     Position = latLng,
-                    Map = map.InteropObject,
                     Title = facility.Name,
                     Content = content,
                     GmpClickable = true
                 });
                 markerTasks.Add(markerTask);
+                await bounds.Extend(latLng);
             }
 
             AdvancedMarkerElement[] createdMarkers = await Task.WhenAll(markerTasks);
+            markers.AddRange(createdMarkers);
+
+            // Store the MarkerClustering instance so it can be disposed later
+            markerClustering = await MarkerClustering.CreateAsync(map.JsRuntime, map.InteropObject, markers);
+
             List<Task> listenerTasks = [];
-            // Add event listeners in parallel and extend bounds
             for (int i = 0; i < createdMarkers.Length; i++)
             {
                 AdvancedMarkerElement marker = createdMarkers[i];
                 FacilityCoords facility = facilities[i];
-                markers.Add(marker);
-                // Add listener without awaiting
                 listenerTasks.Add(marker.AddListener("OnClick", () => OnMarkerClick(facility.Id)));
-                // Extend bounds
-                await bounds.Extend(new LatLngLiteral(facility.latitude, facility.longitude));
             }
-
-            _ = await MarkerClustering.CreateAsync(map.JsRuntime, map.InteropObject, markers);
-            // Wait for all listeners to be attached
 
             await Task.WhenAll(listenerTasks);
             await FitBounds();
@@ -235,17 +211,30 @@ public partial class MapView : IDisposable
 
     private async Task ClearMarkers()
     {
+        // First, dispose of marker clustering if it exists
+        if (markerClustering is not null)
+        {
+            await markerClustering.ClearMarkers();
+            await markerClustering.DisposeAsync();
+            markerClustering = null;
+        }
+
+        // Then clear individual markers
         if (markers.Count > 0)
         {
             await Task.WhenAll(markers.Select(m => m.SetMap(null)));
+            foreach (AdvancedMarkerElement marker in markers)
+            {
+                marker.Dispose();
+            }
             markers.Clear();
         }
     }
 
     /// <summary>
-    /// When the marker is clicked shows a popup
+    /// When the marker is clicked, navigate to the facility details page
     /// </summary>
-    private static void OnMarkerClick(int facilityId) => Console.WriteLine($"Marker for facility {facilityId} was clicked");// You could show facility details, open a popup, etc.
+    private void OnMarkerClick(int facilityId) => _navigationManager.NavigateTo($"/Facilities/{facilityId}");
 
     /// <summary>
     /// The the map to fit the bounds of the markers
