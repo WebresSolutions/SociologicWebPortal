@@ -137,7 +137,7 @@ public partial class MapView : IDisposable
                 FacilityCoords facility = facilities[i];
 
                 // Add listener without awaiting
-                listenerTasks.Add(marker.AddListener("OnClick", () => OnMarkerClick(facility.Id)));
+                listenerTasks.Add(marker.AddListener("click", () => OnMarkerClick(facility.Id)));
             }
 
             // Wait for all listeners to be attached (Optional, but good practice)
@@ -196,7 +196,7 @@ public partial class MapView : IDisposable
             {
                 AdvancedMarkerElement marker = createdMarkers[i];
                 FacilityCoords facility = facilities[i];
-                listenerTasks.Add(marker.AddListener("OnClick", () => OnMarkerClick(facility.Id)));
+                listenerTasks.Add(marker.AddListener("click", () => OnMarkerClick(facility.Id)));
             }
 
             await Task.WhenAll(listenerTasks);

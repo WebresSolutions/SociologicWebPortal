@@ -30,8 +30,24 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
     /// <summary>
     /// Search string for filtering facilities by name
     /// </summary>
-    private string? searchString = null;
+    private string? _searchString = null;
 
+    /// <summary>
+    /// Current page number (0-indexed for MudDataGrid)
+    /// </summary>
+    private int _currentPage = 0;
+
+    /// <summary>
+    /// Current page size (number of items per page)
+    /// </summary>
+    private int _pageSize = 25;
+
+    #endregion
+
+    #region Constants
+    private const string _FacilitiesPageKey = "FacilitiesPage";
+    private const string _FacilitiesPageSizeKey = "FacilitiesPageSize";
+    private const string _FacilitiesSearchKey = "FacilitiesSearch";
     #endregion
 
     /// <summary>
@@ -39,7 +55,31 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
     /// Data loading for the grid is now handled by LoadFacilitiesServerData.
     /// </summary>
     /// <returns>A task representing the asynchronous operation</returns>
-    protected override async Task OnInitializedAsync() => await base.OnInitializedAsync();// The MudDataGrid will automatically call LoadFacilitiesServerData for the initial data load.
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // Restore search string from session storage
+        string? savedSearch = _sessionStorage.GetItem<string>(_FacilitiesSearchKey);
+        if (!string.IsNullOrWhiteSpace(savedSearch))
+        {
+            this._searchString = savedSearch;
+        }
+
+        // Restore page number from session storage
+        int? savedPage = _sessionStorage.GetItem<int>(_FacilitiesPageKey);
+        if (savedPage.HasValue && savedPage.Value >= 0)
+        {
+            this._currentPage = savedPage.Value;
+        }
+
+        // Restore page size from session storage
+        int? savedPageSize = _sessionStorage.GetItem<int>(_FacilitiesPageSizeKey);
+        if (savedPageSize.HasValue && savedPageSize.Value >= 0)
+        {
+            this._pageSize = savedPageSize.Value;
+        }
+    }
 
     /// <summary>
     /// This method is called by the MudDataGrid to fetch data when needed (paging, sorting, filtering).
@@ -57,8 +97,13 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
             int apiPageSize = state.PageSize;
             apiPageNumber++;
 
+            // Save current page to session storage
+            _currentPage = state.Page;
+            _pageSize = state.PageSize;
+            _sessionStorage.SetItem(_FacilitiesPageKey, _currentPage);
+            _sessionStorage.SetItem(_FacilitiesPageSizeKey, _pageSize);
 
-            Result<PagedResponse<FacilityListItemDto>>? apiResult = await _apiService.GetAllFacilities(apiPageSize, apiPageNumber, searchString);
+            Result<PagedResponse<FacilityListItemDto>>? apiResult = await _apiService.GetAllFacilities(apiPageSize, apiPageNumber, _searchString);
 
             if (apiResult is not null && apiResult.IsSuccess && apiResult.Value is not null)
             {
@@ -108,19 +153,29 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
     }
 
     /// <summary>
-    /// Navigates to the facility details page for the specified facility ID
-    /// </summary>
-    /// <param name="facilityId">The identifier of the facility to view</param>
-    public void ViewFacilty(int facilityId) => _navigationManager.NavigateTo($"/Facilities/{facilityId}");
-
-    /// <summary>
     /// Handles search input changes and triggers grid data reload with the new search criteria
     /// </summary>
     /// <param name="text">The search text entered by the user</param>
     /// <returns>A task representing the asynchronous operation, or null if no grid reference exists</returns>
     private Task OnSearch(string text)
     {
-        searchString = text;
+        _searchString = text;
+        // Save search string to session storage (or empty string if cleared)
+        _sessionStorage.SetItem(_FacilitiesSearchKey, _searchString ?? string.Empty);
+        // Reset to first page when search changes
+        _currentPage = 0;
+        _sessionStorage.SetItem(_FacilitiesPageKey, _currentPage);
+        _sessionStorage.SetItem(_FacilitiesPageSizeKey, _pageSize);
+        return _grid!.ReloadServerData();
+    }
+
+    private Task ClearSearch()
+    {
+        _searchString = string.Empty;
+        _currentPage = 0;
+        _sessionStorage.RemoveItem(_FacilitiesSearchKey);
+        _sessionStorage.RemoveItem(_FacilitiesPageKey);
+        _sessionStorage.RemoveItem(_FacilitiesPageSizeKey);
         return _grid!.ReloadServerData();
     }
 }

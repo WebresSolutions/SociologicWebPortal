@@ -22,16 +22,18 @@
 						 Loading="base.IsLoading"
 						 RowsPerPage="_rowsPerPage"
 						 RowsPerPageValues="@(new int[] { 10, 25, 50, 100 })"
+						 CurrentPage="_currentPage"
+						 CurrentPageChanged="@((page) => _currentPage = page)"
 						 Dense=true
 						 @ref="_grid">
 				<ToolBarContent>
-					<MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
-								  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+					<MudTextField T="string" @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" TextChanged="(async (x) => await OnSearch(x))"
+								  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Clearable="true" OnClearButtonClick="ClearSearch"></MudTextField>
 				</ToolBarContent>
 				<Columns>
 					<TemplateColumn StickyLeft="true">
 						<CellTemplate>
-							<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => ViewFacilty(context.Item.FacilityId))" StartIcon="@Icons.Material.Filled.RemoveRedEye">View</MudButton>
+							<MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Href="@($"/Facilities/{context.Item.FacilityId}")" StartIcon="@Icons.Material.Filled.RemoveRedEye">View</MudButton>
 						</CellTemplate>
 					</TemplateColumn>
 					<PropertyColumn Property="x => x.LgAid" HeaderStyle="max-width: 75px" ShowFilterIcon="false" />

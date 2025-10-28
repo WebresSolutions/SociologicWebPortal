@@ -7,7 +7,7 @@ using Casimo.Shared.ResponseModels;
 using Casimo.Web.Services.Interfaces;
 using System.Net.Http.Json;
 
-namespace Casimo.Web.Services;
+namespace Casimo.Web.Services.Instances;
 
 public class ApiService(HttpClient _httpClient) : IApiService
 {
