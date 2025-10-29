@@ -3,6 +3,7 @@ using Casimo.Shared.ApiModels.Facility;
 using Casimo.Shared.ApiModels.FitForPurpose;
 using Casimo.Shared.ApiModels.Responses;
 using Casimo.Shared.ApiModels.User;
+using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 
 namespace Casimo.Web.Services.Interfaces;
@@ -43,7 +44,7 @@ public interface IApiService
     /// <param name="pageNumber">The page number to retrieve</param>
     /// <param name="nameFilter">Optional filter to search facilities by name</param>
     /// <returns>A result containing a paged response of facilities or an error if the operation fails</returns>
-    Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(int pageSize, int pageNumber, string? nameFilter);
+    Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(int pageSize, int pageNumber, string? nameFilter, string? orderby, SortDirectionEnum order);
 
     /// <summary>
     /// Get a specific facility by its ID along with its subspaces and assessment logs

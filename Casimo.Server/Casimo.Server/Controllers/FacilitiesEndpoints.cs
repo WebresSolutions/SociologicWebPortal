@@ -3,6 +3,7 @@ using Casimo.Server.Services.Interfaces;
 using Casimo.Shared.ApiModels.Facility;
 using Casimo.Shared.ApiModels.FitForPurpose;
 using Casimo.Shared.Constants;
+using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,13 +32,17 @@ public static class FacilitiesEndpoints
             [FromQuery] int page,
             [FromQuery] int pageSize,
             [FromQuery] string? nameFilter,
+            [FromQuery] string? orderby,
+            [FromQuery] SortDirectionEnum? order,
             HttpContext httpContext) =>
                 {
                     if (page <= 0)
                         page = 1;
 
+                    order ??= SortDirectionEnum.Asc;
+
                     Result<PagedResponse<FacilityListItemDto>> facilitiesResult = await facilitiesService
-                        .GetAllFacilities(httpContext, page, pageSize, nameFilter);
+                        .GetAllFacilities(httpContext, page, pageSize, nameFilter, orderby, order.Value);
 
                     return EndpointsHelper.ProcessResult(facilitiesResult, "An Error occured while loading facilities");
                 })

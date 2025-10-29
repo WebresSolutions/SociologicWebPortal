@@ -22,12 +22,12 @@
 						 Loading="base.IsLoading"
 						 RowsPerPage="_rowsPerPage"
 						 RowsPerPageValues="@(new int[] { 10, 25, 50, 100 })"
-						 CurrentPage="_currentPage"
-						 CurrentPageChanged="@((page) => _currentPage = page)"
+						 CurrentPage="_sessionData.Page"
+						 CurrentPageChanged="@((page) => _sessionData.Page = page)"
 						 Dense=true
 						 @ref="_grid">
 				<ToolBarContent>
-					<MudTextField T="string" @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" TextChanged="(async (x) => await OnSearch(x))"
+					<MudTextField T="string" @bind-Value="_sessionData.SearchString" Placeholder="Search" Adornment="Adornment.Start" TextChanged="(async (x) => await OnSearch(x))"
 								  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Clearable="true" OnClearButtonClick="ClearSearch"></MudTextField>
 				</ToolBarContent>
 				<Columns>

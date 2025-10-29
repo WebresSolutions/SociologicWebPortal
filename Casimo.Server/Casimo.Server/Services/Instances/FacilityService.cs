@@ -4,6 +4,7 @@ using Casimo.Server.Services.Interfaces;
 using Casimo.Shared.ApiModels.Facility;
 using Casimo.Shared.ApiModels.FitForPurpose;
 using Casimo.Shared.Constants;
+using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
     /// <param name="pageSize">The number of items per page</param>
     /// <param name="nameFilter">An optional filter for facility names</param>
     /// <returns>A result containing a paged list of facilities</returns>
-    public async Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(HttpContext httpContext, int page, int pageSize, string? nameFilter)
+    public async Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(HttpContext httpContext, int page, int pageSize, string? nameFilter, string? orderby, SortDirectionEnum order)
     {
         // Todo: filter the facility based on the users permitted organisations
         Result<PagedResponse<FacilityListItemDto>> result = new();
@@ -32,7 +33,6 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
             IQueryable<TblFacility> query = _casimoDbContext.TblFacilities
                 .AsNoTracking()
                 .AsQueryable();
-
             // If the user is not an admin then the user will need to be filtered
             if (!httpContext.User.IsInRole(RoleConstants.AdminUser))
             {
@@ -43,11 +43,9 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
                 // Query should only show the lgaid 
                 query = query.Where(x => x.Lgaid == user.Lgaid);
             }
-
             if (nameFilter is not null)
             {
                 query = query.Where(x => (x.FacilitySite != null && x.FacilitySite.Contains(nameFilter))
-                        || (x.Address != null && x.Address.Contains(nameFilter))
                         || (x.Address != null && x.Address.Contains(nameFilter))
                         || (x.Settlement != null && x.Settlement.Contains(nameFilter))
                         || (x.Operator != null && x.Operator.Contains(nameFilter))
@@ -55,10 +53,22 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
                         );
             }
 
-            int skipValue = (page - 1) * pageSize;
+            // Apply dynamic ordering
+            bool isDescending = order is SortDirectionEnum.Desc;
+            query = orderby switch
+            {
+                nameof(FacilityListItemDto.Address) => isDescending ? query.OrderByDescending(x => x.Address) : query.OrderBy(x => x.Address),
+                nameof(FacilityListItemDto.Operator) => isDescending ? query.OrderByDescending(x => x.Operator) : query.OrderBy(x => x.Operator),
+                nameof(FacilityListItemDto.Owner) => isDescending ? query.OrderByDescending(x => x.Owner) : query.OrderBy(x => x.Owner),
+                nameof(FacilityListItemDto.PostCode) => isDescending ? query.OrderByDescending(x => x.Postcode) : query.OrderBy(x => x.Postcode),
+                nameof(FacilityListItemDto.Settlement) => isDescending ? query.OrderByDescending(x => x.Settlement) : query.OrderBy(x => x.Settlement),
+                nameof(FacilityListItemDto.SiteName) => isDescending ? query.OrderByDescending(x => x.FacilitySite) : query.OrderBy(x => x.FacilitySite),
+                nameof(FacilityListItemDto.LgAid) => isDescending ? query.OrderByDescending(x => x.Lgaid) : query.OrderBy(x => x.Lgaid),
+                _ => query.OrderBy(x => x.FacilitySite) // Default ordering
+            };
 
+            int skipValue = (page - 1) * pageSize;
             List<FacilityListItemDto> facilities = await query
-                        .OrderBy(x => x.FacilitySite)
                         .Skip(skipValue)
                         .Take(pageSize)
                         .Select(x => new FacilityListItemDto()
@@ -73,13 +83,10 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
                             LgAid = x.Lgaid ?? ""
                         })
             .ToListAsync();
-
             int total = await query.CountAsync();
-
             // Create the paged response
             PagedResponse<FacilityListItemDto> pagedResponse = new(facilities, pageSize, page, total);
             result.Value = pagedResponse;
-
             return result;
         }
         catch (Exception ex)
@@ -224,12 +231,29 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
     /// Gets all distinct LGA IDs from the facilities
     /// </summary>
     /// <returns></returns>
-    public async Task<LGAidCounts[]> GetLgAids() => await _casimoDbContext.TblFacilities
+    public async Task<LGAidCounts[]> GetLgAids(HttpContext httpContext)
+    {
+        IQueryable<TblFacility> query = _casimoDbContext.TblFacilities
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (!httpContext.User.IsInRole(RoleConstants.AdminUser))
+        {
+            // Get the user Id
+            int userId = await httpContext.UserCasimoId(_casimoDbContext);
+            // Get the user 
+            TblUser user = await _casimoDbContext.TblUsers.AsNoTracking().FirstAsync(x => x.UserId == userId);
+            // Query should only show the lgaid 
+            query = query.Where(x => x.Lgaid == user.Lgaid);
+        }
+
+        return await query
         .Where(x => x.Lgaid != null && x.XLongitude != null && x.YLatitude != null)
         .OrderByDescending(x => x.Lgaid)
         .GroupBy(x => x.Lgaid)
         .Select(x => new LGAidCounts(x.Key!, x.Count()))
         .ToArrayAsync();
+    }
 
     /// <summary>
     /// Retrieves the coordinates of all facilities associated with the specified LG Aid identifier.

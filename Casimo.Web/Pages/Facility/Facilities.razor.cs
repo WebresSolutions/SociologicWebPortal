@@ -1,5 +1,7 @@
 using Casimo.Shared.ApiModels.Facility;
+using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
+using Casimo.Shared.WebModels;
 using MudBlazor;
 
 namespace Casimo.Web.Pages.Facility;
@@ -15,7 +17,7 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
     /// <summary>
     /// Stores the last paged response for facilities data
     /// </summary>
-    private PagedResponse<FacilityListItemDto>? _pagedResponse; // Can be useful to store the last paged response
+    private PagedResponse<FacilityListItemDto>? _pagedResponse;
 
     /// <summary>
     /// Number of rows to display per page in the data grid
@@ -25,29 +27,17 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
     /// <summary>
     /// Reference to the data grid for manual refresh operations
     /// </summary>
-    private MudDataGrid<FacilityListItemDto>? _grid; // Reference to the grid for manual refresh
+    private MudDataGrid<FacilityListItemDto>? _grid;
 
     /// <summary>
-    /// Search string for filtering facilities by name
+    /// Session data for the facilities page
     /// </summary>
-    private string? _searchString = null;
-
-    /// <summary>
-    /// Current page number (0-indexed for MudDataGrid)
-    /// </summary>
-    private int _currentPage = 0;
-
-    /// <summary>
-    /// Current page size (number of items per page)
-    /// </summary>
-    private int _pageSize = 25;
+    private FacilitiesSessionData _sessionData = new();
 
     #endregion
 
     #region Constants
-    private const string _FacilitiesPageKey = "FacilitiesPage";
-    private const string _FacilitiesPageSizeKey = "FacilitiesPageSize";
-    private const string _FacilitiesSearchKey = "FacilitiesSearch";
+    private const string _FacilitiesSessionKey = "FacilitiesSession";
     #endregion
 
     /// <summary>
@@ -59,27 +49,16 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
     {
         await base.OnInitializedAsync();
 
-        // Restore search string from session storage
-        string? savedSearch = _sessionStorage.GetItem<string>(_FacilitiesSearchKey);
-        if (!string.IsNullOrWhiteSpace(savedSearch))
-        {
-            this._searchString = savedSearch;
-        }
-
-        // Restore page number from session storage
-        int? savedPage = _sessionStorage.GetItem<int>(_FacilitiesPageKey);
-        if (savedPage.HasValue && savedPage.Value >= 0)
-        {
-            this._currentPage = savedPage.Value;
-        }
-
-        // Restore page size from session storage
-        int? savedPageSize = _sessionStorage.GetItem<int>(_FacilitiesPageSizeKey);
-        if (savedPageSize.HasValue && savedPageSize.Value >= 0)
-        {
-            this._pageSize = savedPageSize.Value;
-        }
+        // Restore session data
+        FacilitiesSessionData? savedSession = _sessionStorage.GetItem<FacilitiesSessionData>(_FacilitiesSessionKey);
+        if (savedSession is not null)
+            _sessionData = savedSession;
     }
+
+    /// <summary>
+    /// Saves the current session data to session storage
+    /// </summary>
+    private void SaveSessionData() => _sessionStorage.SetItem(_FacilitiesSessionKey, _sessionData);
 
     /// <summary>
     /// This method is called by the MudDataGrid to fetch data when needed (paging, sorting, filtering).
@@ -97,13 +76,45 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
             int apiPageSize = state.PageSize;
             apiPageNumber++;
 
-            // Save current page to session storage
-            _currentPage = state.Page;
-            _pageSize = state.PageSize;
-            _sessionStorage.SetItem(_FacilitiesPageKey, _currentPage);
-            _sessionStorage.SetItem(_FacilitiesPageSizeKey, _pageSize);
+            // Handle sorting from grid state
+            SortDefinition<FacilityListItemDto>? sortDefinition = state.SortDefinitions.FirstOrDefault();
+            if (sortDefinition != null)
+            {
+                // Set order direction
+                _sessionData.Order = sortDefinition.Descending ? SortDirectionEnum.Desc : SortDirectionEnum.Asc;
 
-            Result<PagedResponse<FacilityListItemDto>>? apiResult = await _apiService.GetAllFacilities(apiPageSize, apiPageNumber, _searchString);
+                // Map the property name to the API's expected orderby value
+                _sessionData.OrderBy = sortDefinition.SortBy switch
+                {
+                    nameof(FacilityListItemDto.SiteName) or
+                    nameof(FacilityListItemDto.Address) or
+                    nameof(FacilityListItemDto.Operator) or
+                    nameof(FacilityListItemDto.Owner) or
+                    nameof(FacilityListItemDto.PostCode) or
+                    nameof(FacilityListItemDto.Settlement) or
+                    nameof(FacilityListItemDto.LgAid) => sortDefinition.SortBy,
+                    _ => nameof(FacilityListItemDto.SiteName) // Default
+                };
+            }
+            else
+            {
+                // Default sorting if no sort definition
+                _sessionData.OrderBy = nameof(FacilityListItemDto.SiteName);
+                _sessionData.Order = SortDirectionEnum.Asc;
+            }
+
+            // Save current state to session
+            _sessionData.Page = state.Page;
+            _sessionData.PageSize = state.PageSize;
+            _sessionData.PageSize = state.PageSize;
+            SaveSessionData();
+
+            Result<PagedResponse<FacilityListItemDto>>? apiResult = await _apiService.GetAllFacilities(
+                apiPageSize,
+                apiPageNumber,
+                _sessionData.SearchString,
+                _sessionData.OrderBy,
+                _sessionData.Order);
 
             if (apiResult is not null && apiResult.IsSuccess && apiResult.Value is not null)
             {
@@ -112,15 +123,15 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
                 return new GridData<FacilityListItemDto>()
                 {
                     Items = _pagedResponse.Result ?? Enumerable.Empty<FacilityListItemDto>(),
-                    TotalItems = _pagedResponse.TotalCount // Ensure PagedResponse<T> has TotalCount
+                    TotalItems = _pagedResponse.TotalCount
                 };
             }
             else
             {
                 // Handle API error or unsuccessful result
                 string errorMessage = "Failed to load facilities data from the API.";
-                Console.WriteLine($"API Error: {errorMessage}"); // Log to console or proper logger
-                if (_dialogService is not null) // Check if DialogService is available
+                Console.WriteLine($"API Error: {errorMessage}");
+                if (_dialogService is not null)
                 {
                     _ = await _dialogService.ShowMessageBox("Error", errorMessage);
                 }
@@ -129,7 +140,7 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Unexpected Error: {ex.Message}"); // Log to console or proper logger
+            Console.WriteLine($"Unexpected Error: {ex.Message}");
             if (_dialogService != null)
             {
                 _ = await _dialogService.ShowMessageBox("Error", "An unexpected error occurred while fetching facilities.");
@@ -156,26 +167,22 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
     /// Handles search input changes and triggers grid data reload with the new search criteria
     /// </summary>
     /// <param name="text">The search text entered by the user</param>
-    /// <returns>A task representing the asynchronous operation, or null if no grid reference exists</returns>
+    /// <returns>A task representing the asynchronous operation</returns>
     private Task OnSearch(string text)
     {
-        _searchString = text;
-        // Save search string to session storage (or empty string if cleared)
-        _sessionStorage.SetItem(_FacilitiesSearchKey, _searchString ?? string.Empty);
+        _sessionData.SearchString = text;
         // Reset to first page when search changes
-        _currentPage = 0;
-        _sessionStorage.SetItem(_FacilitiesPageKey, _currentPage);
-        _sessionStorage.SetItem(_FacilitiesPageSizeKey, _pageSize);
+        _sessionData.Page = 0;
+        SaveSessionData();
         return _grid!.ReloadServerData();
     }
 
     private Task ClearSearch()
     {
-        _searchString = string.Empty;
-        _currentPage = 0;
-        _sessionStorage.RemoveItem(_FacilitiesSearchKey);
-        _sessionStorage.RemoveItem(_FacilitiesPageKey);
-        _sessionStorage.RemoveItem(_FacilitiesPageSizeKey);
+        _sessionData.SearchString = string.Empty;
+        _sessionData.Page = 0;
+        _sessionStorage.RemoveItem(_FacilitiesSessionKey);
+        _sessionData = new FacilitiesSessionData(); // Reset to defaults
         return _grid!.ReloadServerData();
     }
 }
