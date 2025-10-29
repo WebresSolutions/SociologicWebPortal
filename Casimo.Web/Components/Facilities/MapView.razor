@@ -1,0 +1,19 @@
+﻿@using Casimo.Shared.ApiModels.Facility
+@using GoogleMapsComponents
+
+<div class="map-container">
+	<MudSelect T="string" Dense="true" Value="selectedLGAid" Label="Select An LgAid To View The Map" ValueChanged="ValueChanged" Class="px-2 mb-1" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium">
+		@foreach (LGAidCounts lgAid in lgaids)
+		{
+			<MudSelectItem Value="@lgAid.LGAidName">@lgAid.LGAidName (@lgAid.count)</MudSelectItem>
+		}
+	</MudSelect>
+
+	<GoogleMap @ref="@map" Options="@mapOptions" CssClass="border-rad" ></GoogleMap>
+</div>
+
+<style>
+</style>
+
+
+

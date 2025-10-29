@@ -25,7 +25,7 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
 
         FacilityService service = new(_logger, dbContext);
         // Act
-        Result<PagedResponse<FacilityListItemDto>> facilities = await service.GetAllFacilities(_httpContext, 1, 3, null);
+        Result<PagedResponse<FacilityListItemDto>> facilities = await service.GetAllFacilities(_httpContext, 1, 3, null, null, Shared.Enums.SortDirectionEnum.Asc);
 
         // Assert
         Assert.True(facilities.IsSuccess);
@@ -33,7 +33,7 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
         Assert.Equal(3, facilities.Value.Result.Count);
 
         // ACT
-        facilities = await service.GetAllFacilities(_httpContext, 1, 2, null);
+        facilities = await service.GetAllFacilities(_httpContext, 1, 2, null, null, Shared.Enums.SortDirectionEnum.Asc);
 
         // Assert
         Assert.True(facilities.IsSuccess);
@@ -48,15 +48,15 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
         string filterString = "Facility 1";
         TblFacility facility = TestHelper.CreateFacilities(dbContext, filterString);
         string filterString2 = "Facility 2";
-        TblFacility facility2 = TestHelper.CreateFacilities(dbContext, filterString2);
+        _ = TestHelper.CreateFacilities(dbContext, filterString2);
         FacilityService service = new(_logger, dbContext);
         // Act
-        Result<PagedResponse<FacilityListItemDto>> facilities = await service.GetAllFacilities(_httpContext, 1, 2, filterString);
+        Result<PagedResponse<FacilityListItemDto>> facilities = await service.GetAllFacilities(_httpContext, 1, 2, filterString, null, Shared.Enums.SortDirectionEnum.Asc);
 
         // Assert
         Assert.True(facilities.IsSuccess);
         Assert.NotNull(facilities.Value);
-        Assert.Single(facilities.Value.Result);
+        _ = Assert.Single(facilities.Value.Result);
         Assert.Equal(facility.FacilityId, facilities.Value.Result[0].FacilityId);
     }
 
@@ -78,13 +78,13 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
     public async Task GetFacilityInvalidId()
     {
         CasimoDbContext dbContext = TestHelper.DbContext;
-        TblFacility _ = TestHelper.CreateFacilities(dbContext, Guid.NewGuid().ToString());
+        _ = TestHelper.CreateFacilities(dbContext, Guid.NewGuid().ToString());
         FacilityService service = new(_logger, dbContext);
         // Act
         Result<FacilityDTO> faciltyRes = await service.GetFacility(int.MaxValue);
 
         // Assert
-        Assert.NotNull(faciltyRes.Error);
+        _ = Assert.NotNull(faciltyRes.Error);
         Assert.Null(faciltyRes.Value);
         Assert.Equal("The facility for which you requested does not exist", faciltyRes.ErrorDescription);
     }
@@ -155,7 +155,7 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
+        _ = Assert.NotNull(result.Error);
         Assert.Equal("The facility for which you requested does not exist", result.ErrorDescription);
     }
 

@@ -1,6 +1,6 @@
 using Casimo.Shared.WebModels;
 using Casimo.Web;
-using Casimo.Web.Services;
+using Casimo.Web.Services.Instances;
 using Casimo.Web.Services.Interfaces;
 using GoogleMapsComponents;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
@@ -51,7 +51,6 @@ builder.Services.AddOidcAuthentication(options =>
     options.UserOptions.RoleClaim = "role";
 });
 
-builder.Services.AddScoped<IApiService, ApiService>();
 builder.Services.AddMudServices(config =>
 {
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
@@ -67,6 +66,10 @@ builder.Services.AddMudServices(config =>
 
 builder.Services.AddBlazorGoogleMaps(builder.Configuration.GetValue<string>("GoogleMaps:MapsApiKey")
     ?? throw new Exception("Failed to load the google maps api key"));
+
+// Add the custom services 
+builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddSingleton<SessionStorage>();
 
 WebAssemblyHost host = builder.Build();
 await host.RunAsync();

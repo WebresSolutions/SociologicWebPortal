@@ -3,11 +3,12 @@ using Casimo.Shared.ApiModels.Facility;
 using Casimo.Shared.ApiModels.FitForPurpose;
 using Casimo.Shared.ApiModels.Responses;
 using Casimo.Shared.ApiModels.User;
+using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 using Casimo.Web.Services.Interfaces;
 using System.Net.Http.Json;
 
-namespace Casimo.Web.Services;
+namespace Casimo.Web.Services.Instances;
 
 public class ApiService(HttpClient _httpClient) : IApiService
 {
@@ -134,7 +135,7 @@ public class ApiService(HttpClient _httpClient) : IApiService
     /// <param name="pageNumber">The page number to retrieve</param>
     /// <param name="nameFilter">Optional filter to search facilities by name</param>
     /// <returns>A result containing a paged response of facilities or an error if the operation fails</returns>
-    public async Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(int pageSize, int pageNumber, string? nameFilter)
+    public async Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(int pageSize, int pageNumber, string? nameFilter, string? orderby, SortDirectionEnum order)
     {
         Result<PagedResponse<FacilityListItemDto>> res = new();
         try
@@ -142,11 +143,16 @@ public class ApiService(HttpClient _httpClient) : IApiService
             Dictionary<string, string> queryParameters = new()
             {
                 { "pageSize", pageSize.ToString() },
-                { "page", pageNumber.ToString() }
+                { "page", pageNumber.ToString() },
+                { "order", ((int)order).ToString() }
             };
 
             if (nameFilter is not null)
                 queryParameters.Add("nameFilter", nameFilter ?? string.Empty);
+
+
+            if (orderby is not null)
+                queryParameters.Add("orderby", orderby ?? string.Empty);
 
             FormUrlEncodedContent dictFormUrlEncoded = new(queryParameters);
             string queryString = await dictFormUrlEncoded.ReadAsStringAsync();
@@ -546,6 +552,63 @@ public class ApiService(HttpClient _httpClient) : IApiService
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
+        }
+        return res;
+    }
+
+    /// <summary>
+    /// Gets a list of LGAids and their counts
+    /// </summary>
+    /// <returns></returns>
+    public async Task<Result<LGAidCounts[]>> GetLgAids()
+    {
+        Result<LGAidCounts[]> res = new();
+        try
+        {
+            LGAidCounts[]? response = await _httpClient.GetFromJsonAsync<LGAidCounts[]>($"api/Facilities/LGAids");
+            if (response is not null)
+            {
+                res.Value = response;
+            }
+            else
+            {
+                res.ErrorDescription = "Failed to get the LGAid counts";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            // Handle exception
+        }
+        return res;
+    }
+
+    public async Task<Result<FacilityCoords[]>> GetFacilitesForLgAId(string lgAid)
+    {
+        Dictionary<string, string> queryParameters = new()
+            {
+                { "lgAid", lgAid},
+            };
+
+        string querystring = await new FormUrlEncodedContent(queryParameters).ReadAsStringAsync();
+
+        Result<FacilityCoords[]> res = new();
+        try
+        {
+            FacilityCoords[]? response = await _httpClient.GetFromJsonAsync<FacilityCoords[]>($"api/Facilities/LGAid?{querystring}");
+            if (response is not null)
+            {
+                res.Value = response;
+            }
+            else
+            {
+                res.ErrorDescription = "Failed to get the LGAid counts";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            // Handle exception
         }
         return res;
     }

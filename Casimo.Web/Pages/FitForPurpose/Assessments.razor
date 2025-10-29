@@ -17,8 +17,7 @@
                 <SelectColumn T="AssessmentListItemDto" />
                 <TemplateColumn StickyLeft="true" HeaderStyle="max-width: 90px" ShowFilterIcon="false">
                     <CellTemplate>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                   OnClick="@(() => ViewAssessment(context.Item.AssessmentLogId))" StartIcon="@Icons.Material.Filled.RemoveRedEye">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Href="@($"/Assessments/{context.Item.AssessmentLogId}")" StartIcon="@Icons.Material.Filled.RemoveRedEye">
                             View
                         </MudButton>
                     </CellTemplate>

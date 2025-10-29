@@ -37,7 +37,7 @@
 							<MudTd DataLabel="Assessment ID">@context.LogId</MudTd>
 							<MudTd>
 								<MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled"
-											   Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveFromList(context.LogId))">
+											   Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveFromAddList(context.LogId))">
 								</MudIconButton>
 							</MudTd>
 						</RowTemplate>
@@ -181,6 +181,11 @@
 	{
 		Logs = Logs.Where(x => x.LogId != assessmentId).ToList();
 		StateHasChanged();
+	}
+
+	private void RemoveFromAddList(int id)
+	{
+		AssessmentsToAdd = AssessmentsToAdd.Where(x => x.LogId != id).ToList();
 	}
 
 	/// <summary>

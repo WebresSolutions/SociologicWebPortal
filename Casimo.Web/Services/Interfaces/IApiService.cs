@@ -3,6 +3,7 @@ using Casimo.Shared.ApiModels.Facility;
 using Casimo.Shared.ApiModels.FitForPurpose;
 using Casimo.Shared.ApiModels.Responses;
 using Casimo.Shared.ApiModels.User;
+using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 
 namespace Casimo.Web.Services.Interfaces;
@@ -43,7 +44,7 @@ public interface IApiService
     /// <param name="pageNumber">The page number to retrieve</param>
     /// <param name="nameFilter">Optional filter to search facilities by name</param>
     /// <returns>A result containing a paged response of facilities or an error if the operation fails</returns>
-    Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(int pageSize, int pageNumber, string? nameFilter);
+    Task<Result<PagedResponse<FacilityListItemDto>>> GetAllFacilities(int pageSize, int pageNumber, string? nameFilter, string? orderby, SortDirectionEnum order);
 
     /// <summary>
     /// Get a specific facility by its ID along with its subspaces and assessment logs
@@ -134,4 +135,17 @@ public interface IApiService
     /// <param name="listId">Remove a list. Will remove all users from that list and delete</param>
     /// <returns>Bool if success</returns>
     Task<Result<bool>> RemoveList(int listId);
+
+    /// <summary>
+    /// Gets a list of lgaids and their counts
+    /// </summary>
+    /// <returns></returns>
+    Task<Result<LGAidCounts[]>> GetLgAids();
+
+    /// <summary>
+    /// Gets facilities for a specific lgAid
+    /// </summary>
+    /// <param name="lgAid">The lgAid filter</param>
+    /// <returns>A list of facilities and their lgaid</returns>
+    Task<Result<FacilityCoords[]>> GetFacilitesForLgAId(string lgAid);
 }

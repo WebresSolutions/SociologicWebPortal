@@ -1,134 +1,188 @@
 using Casimo.Shared.ApiModels.Facility;
+using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
+using Casimo.Shared.WebModels;
 using MudBlazor;
 
-namespace Casimo.Web.Pages.Facility
+namespace Casimo.Web.Pages.Facility;
+
+/// <summary>
+/// Code-behind class for the Facilities page
+/// Handles data loading, pagination, and search functionality for facility management
+/// </summary>
+public partial class Facilities // This inherits BaseDataComponent as per your .razor
 {
+    #region Private Fields
+
     /// <summary>
-    /// Code-behind class for the Facilities page
-    /// Handles data loading, pagination, and search functionality for facility management
+    /// Stores the last paged response for facilities data
     /// </summary>
-    public partial class Facilities // This inherits BaseDataComponent as per your .razor
+    private PagedResponse<FacilityListItemDto>? _pagedResponse;
+
+    /// <summary>
+    /// Number of rows to display per page in the data grid
+    /// </summary>
+    private readonly int _rowsPerPage = 25;
+
+    /// <summary>
+    /// Reference to the data grid for manual refresh operations
+    /// </summary>
+    private MudDataGrid<FacilityListItemDto>? _grid;
+
+    /// <summary>
+    /// Session data for the facilities page
+    /// </summary>
+    private FacilitiesSessionData _sessionData = new();
+
+    #endregion
+
+    #region Constants
+    private const string _FacilitiesSessionKey = "FacilitiesSession";
+    #endregion
+
+    /// <summary>
+    /// Called when the component is initialized.
+    /// Data loading for the grid is now handled by LoadFacilitiesServerData.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    protected override async Task OnInitializedAsync()
     {
-        #region Private Fields
+        await base.OnInitializedAsync();
 
-        /// <summary>
-        /// Stores the last paged response for facilities data
-        /// </summary>
-        private PagedResponse<FacilityListItemDto>? _pagedResponse; // Can be useful to store the last paged response
+        // Restore session data
+        FacilitiesSessionData? savedSession = _sessionStorage.GetItem<FacilitiesSessionData>(_FacilitiesSessionKey);
+        if (savedSession is not null)
+            _sessionData = savedSession;
+    }
 
-        /// <summary>
-        /// Number of rows to display per page in the data grid
-        /// </summary>
-        private readonly int _rowsPerPage = 25;
+    /// <summary>
+    /// Saves the current session data to session storage
+    /// </summary>
+    private void SaveSessionData() => _sessionStorage.SetItem(_FacilitiesSessionKey, _sessionData);
 
-        /// <summary>
-        /// Reference to the data grid for manual refresh operations
-        /// </summary>
-        private MudDataGrid<FacilityListItemDto>? _grid; // Reference to the grid for manual refresh
+    /// <summary>
+    /// This method is called by the MudDataGrid to fetch data when needed (paging, sorting, filtering).
+    /// Implements server-side data loading with pagination and search capabilities.
+    /// </summary>
+    /// <param name="state">The current grid state containing pagination and sorting information</param>
+    /// <returns>A GridData object containing the current page of facilities and total count</returns>
+    private async Task<GridData<FacilityListItemDto>> LoadFacilitiesServerData(GridState<FacilityListItemDto> state)
+    {
+        IsLoading = true;
 
-        /// <summary>
-        /// Search string for filtering facilities by name
-        /// </summary>
-        private string? searchString = null;
-
-        #endregion
-
-        /// <summary>
-        /// Called when the component is initialized.
-        /// Data loading for the grid is now handled by LoadFacilitiesServerData.
-        /// </summary>
-        /// <returns>A task representing the asynchronous operation</returns>
-        protected override async Task OnInitializedAsync()
+        try
         {
-            await base.OnInitializedAsync();
-            // The MudDataGrid will automatically call LoadFacilitiesServerData for the initial data load.
-        }
+            int apiPageNumber = state.Page;
+            int apiPageSize = state.PageSize;
+            apiPageNumber++;
 
-        /// <summary>
-        /// This method is called by the MudDataGrid to fetch data when needed (paging, sorting, filtering).
-        /// Implements server-side data loading with pagination and search capabilities.
-        /// </summary>
-        /// <param name="state">The current grid state containing pagination and sorting information</param>
-        /// <returns>A GridData object containing the current page of facilities and total count</returns>
-        private async Task<GridData<FacilityListItemDto>> LoadFacilitiesServerData(GridState<FacilityListItemDto> state)
-        {
-            IsLoading = true;
-
-            try
+            // Handle sorting from grid state
+            SortDefinition<FacilityListItemDto>? sortDefinition = state.SortDefinitions.FirstOrDefault();
+            if (sortDefinition != null)
             {
-                int apiPageNumber = state.Page;
-                int apiPageSize = state.PageSize;
-                apiPageNumber++;
+                // Set order direction
+                _sessionData.Order = sortDefinition.Descending ? SortDirectionEnum.Desc : SortDirectionEnum.Asc;
 
-
-                Result<PagedResponse<FacilityListItemDto>>? apiResult = await _apiService.GetAllFacilities(apiPageSize, apiPageNumber, searchString);
-
-                if (apiResult is not null && apiResult.IsSuccess && apiResult.Value is not null)
+                // Map the property name to the API's expected orderby value
+                _sessionData.OrderBy = sortDefinition.SortBy switch
                 {
-                    _pagedResponse = apiResult.Value;
-                    // MudDataGrid requires GridData with Items for the current page and TotalItems count
-                    return new GridData<FacilityListItemDto>()
-                    {
-                        Items = _pagedResponse.Result ?? Enumerable.Empty<FacilityListItemDto>(),
-                        TotalItems = _pagedResponse.TotalCount // Ensure PagedResponse<T> has TotalCount
-                    };
-                }
-                else
-                {
-                    // Handle API error or unsuccessful result
-                    string errorMessage = "Failed to load facilities data from the API.";
-                    Console.WriteLine($"API Error: {errorMessage}"); // Log to console or proper logger
-                    if (_dialogService is not null) // Check if DialogService is available
-                    {
-                        await _dialogService.ShowMessageBox("Error", errorMessage);
-                    }
-                    return new GridData<FacilityListItemDto>() { Items = [], TotalItems = 0 };
-                }
+                    nameof(FacilityListItemDto.SiteName) or
+                    nameof(FacilityListItemDto.Address) or
+                    nameof(FacilityListItemDto.Operator) or
+                    nameof(FacilityListItemDto.Owner) or
+                    nameof(FacilityListItemDto.PostCode) or
+                    nameof(FacilityListItemDto.Settlement) or
+                    nameof(FacilityListItemDto.LgAid) => sortDefinition.SortBy,
+                    _ => nameof(FacilityListItemDto.SiteName) // Default
+                };
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Unexpected Error: {ex.Message}"); // Log to console or proper logger
-                if (_dialogService != null)
-                {
-                    await _dialogService.ShowMessageBox("Error", "An unexpected error occurred while fetching facilities.");
-                }
-                return new GridData<FacilityListItemDto>() { Items = Enumerable.Empty<FacilityListItemDto>(), TotalItems = 0 };
+                // Default sorting if no sort definition
+                _sessionData.OrderBy = nameof(FacilityListItemDto.SiteName);
+                _sessionData.Order = SortDirectionEnum.Asc;
             }
-            finally
+
+            // Save current state to session
+            _sessionData.Page = state.Page;
+            _sessionData.PageSize = state.PageSize;
+            _sessionData.PageSize = state.PageSize;
+            SaveSessionData();
+
+            Result<PagedResponse<FacilityListItemDto>>? apiResult = await _apiService.GetAllFacilities(
+                apiPageSize,
+                apiPageNumber,
+                _sessionData.SearchString,
+                _sessionData.OrderBy,
+                _sessionData.Order);
+
+            if (apiResult is not null && apiResult.IsSuccess && apiResult.Value is not null)
             {
-                IsLoading = false;
+                _pagedResponse = apiResult.Value;
+                // MudDataGrid requires GridData with Items for the current page and TotalItems count
+                return new GridData<FacilityListItemDto>()
+                {
+                    Items = _pagedResponse.Result ?? Enumerable.Empty<FacilityListItemDto>(),
+                    TotalItems = _pagedResponse.TotalCount
+                };
+            }
+            else
+            {
+                // Handle API error or unsuccessful result
+                string errorMessage = "Failed to load facilities data from the API.";
+                Console.WriteLine($"API Error: {errorMessage}");
+                if (_dialogService is not null)
+                {
+                    _ = await _dialogService.ShowMessageBox("Error", errorMessage);
+                }
+                return new GridData<FacilityListItemDto>() { Items = [], TotalItems = 0 };
             }
         }
-
-        /// <summary>
-        /// Manually refreshes the grid's data from another action (e.g., after adding/editing a facility)
-        /// </summary>
-        /// <returns>A task representing the asynchronous operation</returns>
-        public async Task RefreshGridData()
+        catch (Exception ex)
         {
-            if (_grid is not null)
-                await _grid.ReloadServerData();
+            Console.WriteLine($"Unexpected Error: {ex.Message}");
+            if (_dialogService != null)
+            {
+                _ = await _dialogService.ShowMessageBox("Error", "An unexpected error occurred while fetching facilities.");
+            }
+            return new GridData<FacilityListItemDto>() { Items = Enumerable.Empty<FacilityListItemDto>(), TotalItems = 0 };
         }
-
-        /// <summary>
-        /// Navigates to the facility details page for the specified facility ID
-        /// </summary>
-        /// <param name="facilityId">The identifier of the facility to view</param>
-        public void ViewFacilty(int facilityId)
+        finally
         {
-            _navigationManager.NavigateTo($"/Facilities/{facilityId}");
+            IsLoading = false;
         }
+    }
 
-        /// <summary>
-        /// Handles search input changes and triggers grid data reload with the new search criteria
-        /// </summary>
-        /// <param name="text">The search text entered by the user</param>
-        /// <returns>A task representing the asynchronous operation, or null if no grid reference exists</returns>
-        private Task OnSearch(string text)
-        {
-            searchString = text;
-            return _grid!.ReloadServerData();
-        }
+    /// <summary>
+    /// Manually refreshes the grid's data from another action (e.g., after adding/editing a facility)
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation</returns>
+    public async Task RefreshGridData()
+    {
+        if (_grid is not null)
+            await _grid.ReloadServerData();
+    }
+
+    /// <summary>
+    /// Handles search input changes and triggers grid data reload with the new search criteria
+    /// </summary>
+    /// <param name="text">The search text entered by the user</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    private Task OnSearch(string text)
+    {
+        _sessionData.SearchString = text;
+        // Reset to first page when search changes
+        _sessionData.Page = 0;
+        SaveSessionData();
+        return _grid!.ReloadServerData();
+    }
+
+    private Task ClearSearch()
+    {
+        _sessionData.SearchString = string.Empty;
+        _sessionData.Page = 0;
+        _sessionStorage.RemoveItem(_FacilitiesSessionKey);
+        _sessionData = new FacilitiesSessionData(); // Reset to defaults
+        return _grid!.ReloadServerData();
     }
 }
