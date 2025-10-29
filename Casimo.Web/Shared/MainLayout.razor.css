@@ -9,9 +9,11 @@
 .main {
     flex: 1;
     border-radius: 10px;
-    display: flex;
+/*    display: flex;
     flex-direction: column;
-    overflow: hidden;
+*/
+    overflow-x: hidden;
+
 }
 
 .sidebar {

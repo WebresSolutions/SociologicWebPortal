@@ -35,7 +35,7 @@ public interface IFacilityService
     /// Gets a list of LGaids
     /// </summary>
     /// <returns></returns>
-    Task<LGAidCounts[]> GetLgAids();
+    Task<LGAidCounts[]> GetLgAids(HttpContext httpContext);
 
     /// <summary>
     /// Retrieves the coordinates of all facilities associated with the specified LG Aid identifier.

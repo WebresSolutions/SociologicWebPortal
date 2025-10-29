@@ -87,9 +87,9 @@ public static class FacilitiesEndpoints
 
         _ = facilitiesGroup.MapGet(
             "/LGAids",
-            async ([FromServices] IFacilityService facilitiesService) =>
+            async ([FromServices] IFacilityService facilitiesService, HttpContext httpContext) =>
             {
-                LGAidCounts[] lgaIdCounts = await facilitiesService.GetLgAids();
+                LGAidCounts[] lgaIdCounts = await facilitiesService.GetLgAids(httpContext);
                 return Results.Ok(lgaIdCounts);
             });
 
