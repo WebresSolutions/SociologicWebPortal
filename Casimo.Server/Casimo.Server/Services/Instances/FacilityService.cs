@@ -151,7 +151,7 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
                     facility.FacilitySite ?? "", facility.Address ?? "",
                     postCode: facility.Postcode, suburb: facility.Settlement ?? "", owner: facility.Owner ?? "",
                     facility.Operator ?? "", status: facility.Status?.FacilityStatus ?? "",
-                    coordinates, facility.Comments ?? "", facility.StatusId);
+                    coordinates, facility.Comments ?? "", facility.StatusId, facility.Lgaid ?? "");
 
             List<FacilityRelatedAssets> relatedAssetts = [.. facility.TblAssets
                     .Select(x => new FacilityRelatedAssets()

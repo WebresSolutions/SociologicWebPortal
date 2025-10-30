@@ -31,7 +31,7 @@ public class FacilityDetailsDto
     /// <param name="coordinates">The geographic coordinates of the facility</param>
     /// <param name="notes">Optional notes about the facility</param>
     [SetsRequiredMembers]
-    public FacilityDetailsDto(int facilityId, string siteName, string streetAddress, short? postCode, string suburb, string owner, string oper, string status, Coordinates? coordinates, string? notes, int? statusId)
+    public FacilityDetailsDto(int facilityId, string siteName, string streetAddress, short? postCode, string suburb, string owner, string oper, string status, Coordinates? coordinates, string? notes, int? statusId, string lga)
     {
         FacilityId = facilityId;
         SiteName = siteName;
@@ -44,6 +44,7 @@ public class FacilityDetailsDto
         Coordinates = coordinates;
         Notes = notes;
         StatusId = statusId;
+        LGA = lga;
     }
 
     /// <summary>
@@ -112,4 +113,9 @@ public class FacilityDetailsDto
     /// Gets or sets the geographic coordinates of the facility
     /// </summary>
     public Coordinates? Coordinates { get; set; }
+
+    /// <summary>
+    /// Gets the name of the local government area (LGA) associated with the entity.
+    /// </summary>
+    public string LGA { get; set; }
 }
