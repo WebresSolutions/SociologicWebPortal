@@ -35,13 +35,11 @@ public partial class MapView : IDisposable
     [Parameter]
     public EventCallback<FacilityCoords> OnUpdateCoords { get; set; }
 
+    #region Private Fields
     /// <summary>
     /// Previous ShowMode to detect changes
     /// </summary>
     private ShowModeEnum? previousShowMode;
-
-    #region Private Fields
-    private Coordinates? coords;
 
     /// <summary>
     /// A list of lgaid in the database with counts
@@ -100,13 +98,10 @@ public partial class MapView : IDisposable
     /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
-        coords = DefaultDetails is null
-          ? new() { Latitude = -37.8162, Longitude = 144.9640 }
-          : new() { Latitude = -37.8162, Longitude = 144.9640 };
         mapOptions = new()
         {
             Zoom = 13,
-            Center = new LatLngLiteral(coords.Latitude!.Value, coords.Longitude!.Value),
+            Center = new LatLngLiteral(-37.8162, 144.9640),
             MapTypeId = MapTypeId.Roadmap,
             MapId = Guid.NewGuid().ToString()
         };
@@ -137,6 +132,10 @@ public partial class MapView : IDisposable
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
+        if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
+        {
+            mapOptions!.Center = new LatLngLiteral(DefaultDetails.Coordinates.Latitude ?? 0, DefaultDetails.Coordinates.Longitude ?? 0);
+        }
         // Check if ShowMode changed and we need to reload markers
         if (previousShowMode.HasValue && previousShowMode.Value != ShowMode && markersLoaded && !string.IsNullOrEmpty(selectedLGAid))
         {
@@ -153,9 +152,7 @@ public partial class MapView : IDisposable
     public async Task ReloadMarkersAsync(bool preserveZoom = false)
     {
         if (!string.IsNullOrEmpty(selectedLGAid))
-        {
             await ValueChanged(selectedLGAid, preserveZoom);
-        }
     }
 
     /// <summary>
@@ -189,16 +186,13 @@ public partial class MapView : IDisposable
     {
         try
         {
-            if (map?.InteropObject is null)
-                return;
-
-            if (facilities.Length is 0)
+            if (map?.InteropObject is null || facilities.Length is 0)
                 return;
 
             bounds = await LatLngBounds.CreateAsync(map.JsRuntime);
 
-            List<(Task<AdvancedMarkerElement> MarkerTask, FacilityCoords Facility)> markerTasks = new(facilities.Length);
-            foreach (FacilityCoords facility in facilities)
+            // Create all marker tasks in parallel using LINQ
+            List<(Task<AdvancedMarkerElement> MarkerTask, FacilityCoords Facility, LatLngLiteral Position)> markerData = [.. facilities.Select(facility =>
             {
                 double lat = facility.latitude;
                 LatLngLiteral latLng = new(lat, facility.longitude);
@@ -214,32 +208,46 @@ public partial class MapView : IDisposable
                     GmpDraggable = isDefaultFacility
                 });
 
-                markerTasks.Add((markerTask, facility));
-                await bounds.Extend(latLng);
-            }
+                return (MarkerTask: markerTask, Facility: facility, Position: latLng);
+            })];
 
-            Task<AdvancedMarkerElement>[] allMarkerTasks = [.. markerTasks.Select(t => t.MarkerTask)];
-            AdvancedMarkerElement[] completedMarkers = await Task.WhenAll(allMarkerTasks);
-            markers = completedMarkers.Zip(markerTasks.Select(t => t.Facility), (marker, facility) => (marker, facility)).ToDictionary(x => x.facility, y => y.marker);
-            List<Task> listenerTasks = new(markers.Count);
-            markerClustering = await MarkerClustering.CreateAsync(map.JsRuntime, map.InteropObject, markers.Select(x => x.Value));
+            // Await all markers to be created
+            AdvancedMarkerElement[] completedMarkers = await Task.WhenAll(markerData.Select(m => m.MarkerTask));
 
-            foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> facility in markers)
+            // Extend bounds with all positions in parallel
+            await Task.WhenAll(markerData.Select(m => bounds.Extend(m.Position)));
+
+            // Build markers dictionary
+            markers = completedMarkers
+                .Zip(markerData, (marker, data) => (marker, data.Facility))
+                .ToDictionary(x => x.Facility, x => x.marker);
+
+            // Create marker clustering
+            markerClustering = await MarkerClustering.CreateAsync(
+                map.JsRuntime,
+                map.InteropObject,
+                markers.Values
+            );
+
+            // Add all event listeners in parallel
+            List<Task> listenerTasks = new(markers.Count * 2);
+
+            foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> kvp in markers)
             {
-                listenerTasks.Add(facility.Value.AddListener("click", () => OnMarkerClick(facility.Key.Id)));
+                listenerTasks.Add(kvp.Value.AddListener("click", () => OnMarkerClick(kvp.Key.Id)));
 
-                if (facility.Key.Id == DefaultDetails?.FacilityId) // Only for the draggable marker
-                    listenerTasks.Add(facility.Value.AddListener<MouseEvent>("dragend", async (e) =>
+                // Only add dragend listener for the default facility
+                if (kvp.Key.Id == DefaultDetails?.FacilityId)
+                    listenerTasks.Add(kvp.Value.AddListener<MouseEvent>("dragend", async (e) =>
                     {
-                        await HandleDragEnd(e, facility);
+                        await HandleDragEnd(e, kvp);
                     }));
             }
-            ;
 
             await Task.WhenAll(listenerTasks);
 
             // Only fit bounds if we're not preserving zoom (i.e., on initial load or LGA change)
-            if (!preserveZoom && DefaultDetails is not null)
+            if (!preserveZoom && DefaultDetails is null)
                 await FitBounds();
 
             markersLoaded = true;
@@ -309,7 +317,7 @@ public partial class MapView : IDisposable
     /// <summary>
     /// When the marker is clicked, navigate to the facility details page
     /// </summary>
-    private void OnMarkerClick(int facilityId) => _navigationManager.NavigateTo($"/Facilities/{facilityId}");
+    private void OnMarkerClick(int facilityId) => _navigationManager.NavigateTo($"/Facilities/{facilityId}", true);
 
     /// <summary>
     /// The the map to fit the bounds of the markers
