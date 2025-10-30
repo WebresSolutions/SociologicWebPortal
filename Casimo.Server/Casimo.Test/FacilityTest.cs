@@ -112,7 +112,8 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
             status: "Active",
             coordinates: new Coordinates(40.7128, -74.0060),
             notes: "Updated notes",
-            statusId: 1
+            statusId: 1,
+            "LGA"
         );
 
         // Act
@@ -147,7 +148,8 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
             status: "Active",
             coordinates: new Coordinates(40.7128, -74.0060),
             notes: "Test notes",
-            statusId: 1
+            statusId: 1,
+            "LGA"
         );
 
         // Act
@@ -179,7 +181,8 @@ public class FacilityTest(CasimoWebAppFactory factory) : IClassFixture<CasimoWeb
             status: "Active",
             coordinates: new Coordinates(40.7128, -74.0060),
             notes: "Test notes",
-            statusId: 1
+            statusId: 1,
+            "LGA"
         );
 
         // Act

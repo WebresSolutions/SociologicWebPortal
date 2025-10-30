@@ -12,7 +12,7 @@ public class FacilityDTO
     /// Gets or sets the detailed facility information
     /// Contains comprehensive facility data including location, ownership, and status
     /// </summary>
-    public FacilityDetailsDto FacilityDetails { get; set; }
+    public required FacilityDetailsDto FacilityDetails { get; set; }
 
     /// <summary>
     /// Gets or sets the list of subspaces within the facility
@@ -35,5 +35,5 @@ public class FacilityDTO
     /// <summary>
     /// List of statuses
     /// </summary>
-    public List<FacilityStatusDto> Statuses { get; set; }
+    public List<FacilityStatusDto> Statuses { get; set; } = [];
 }
