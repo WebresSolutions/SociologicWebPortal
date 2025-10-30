@@ -85,12 +85,16 @@ public static class WebHelpers
         return result ?? false;
     }
 
-    public static string FormatCoordinate(string name)
-        => "<div style=\"display: flex; align-items: center; background: var(--color-primary); color: white; padding: 8px 16px; border-radius: 25px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.4); cursor: pointer; border: 3px solid white; white-space: nowrap; transform: translateY(-50%);\">" +
-                 "<svg width=\"16\" height=\"16\" style=\"margin-right: 6px;\" viewBox=\"0 0 24 24\" fill=\"currentColor\">" +
-                 "<path d=\"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z\"/>" +
-                 "</svg>" +
-                 $"<span>{name}</span>" +
-                 "</div>";
+    public static string FormatCoordinate(string name, bool secondary = false)
+    {
+        string color = secondary ? "var(--color-secondary)" : "var(--color-primary)";
+
+        return $"<div style=\"display: flex; align-items: center; background: {color}; color: white; padding: 8px 16px; border-radius: 25px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.4); cursor: pointer; border: 3px solid white; white-space: nowrap; transform: translateY(-50%);\">" +
+                     "<svg width=\"16\" height=\"16\" style=\"margin-right: 6px;\" viewBox=\"0 0 24 24\" fill=\"currentColor\">" +
+                     "<path d=\"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z\"/>" +
+                     "</svg>" +
+                     $"<span>{name}</span>" +
+                     "</div>";
+    }
 }
 
