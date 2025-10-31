@@ -5,10 +5,7 @@
 @using GoogleMapsComponents
 @using GoogleMapsComponents.Maps
 @inherits BaseDataComponent;
-@inject IApiService ApiService
-@inject IDialogService DialogService;
-@inject NavigationManager NavigationManager;
-@inject IJSRuntime JSRuntime
+
 <div class="d-flex flex-column gap-4">
 
 	<Card IsLoading="IsLoading">
@@ -18,74 +15,76 @@
 			</div>
 		</TitleContent>
 		<ChildContent>
-			@if (_details is not null)
+			@if (details is not null)
 			{
-				<EditForm Model="_details.FacilityDetails" OnValidSubmit="SaveFacility">
+				<EditForm Model="details.FacilityDetails" OnValidSubmit="SaveFacility">
 					<DataAnnotationsValidator />
 					<div class="facility-details-container">
 						<section class="d-flex flex-column gap-3">
 							<div class="inner-container d-flex flex-column gap-2">
-								@* <MudSwitch @bind-Value="_showOtherFacilities" Color="Color.Primary" Label="Show Other Facilities In LGA"></MudSwitch> *@
-								<MudToggleGroup T="ShowModeEnum" SelectionMode="SelectionMode.SingleSelection" @bind-Value="_showmode" Color="Color.Primary" CheckMark FixedContent>
-									<MudToggleItem Value="@(ShowModeEnum.Single)" Text="Single" />
-									<MudToggleItem Value="@(ShowModeEnum.All)" Text="All Facilities" />
+								<MudToggleGroup T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent>
+									<MudToggleItem Value="@(MapMode.Single)" Text="Single" />
+									<MudToggleItem Value="@(MapMode.All)" Text="All Facilities" />
 								</MudToggleGroup>
-								<MapView LGAFilter="@_details.FacilityDetails.LGA" DefaultDetails="@_details.FacilityDetails" ShowMode="@_showmode" OnUpdateCoords=@CoordsUpdated />
+								<FacilitiesMap LGAFilter="@details.FacilityDetails.LGA" DefaultDetails="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" />
 							</div>
 							<div class="facility-address">
 								<div class="inner-container">
-									<MudTextField @bind-Value="_details.FacilityDetails.StreetAddress" Label="Street Address"
+									<h5>Address</h5>
+									<MudTextField @bind-Value="details.FacilityDetails.StreetAddress" Label="Street Address"
 												  Variant="Variant.Outlined"></MudTextField>
-									<ValidationMessage For="@(() => _details.FacilityDetails.StreetAddress)" />
-									<MudTextField @bind-Value="_details.FacilityDetails.Suburb" Label="Suburb/Town"
+									<ValidationMessage For="@(() => details.FacilityDetails.StreetAddress)" />
+									<MudTextField @bind-Value="details.FacilityDetails.Suburb" Label="Suburb/Town"
 												  Variant="Variant.Outlined"></MudTextField>
-									<ValidationMessage For="@(() => _details.FacilityDetails.Suburb)" />
-									<MudTextField @bind-Value="_details.FacilityDetails.PostCode" Label="PostCode"
+									<ValidationMessage For="@(() => details.FacilityDetails.Suburb)" />
+									<MudTextField @bind-Value="details.FacilityDetails.PostCode" Label="PostCode"
 												  Variant="Variant.Outlined"></MudTextField>
-									<ValidationMessage For="@(() => _details.FacilityDetails.PostCode)" />
+									<ValidationMessage For="@(() => details.FacilityDetails.PostCode)" />
 								</div>
 								<div class="inner-container">
-									@if (_details.FacilityDetails.Coordinates is not null)
+									@if (details.FacilityDetails.Coordinates is not null)
 									{
-										<MudTextField @bind-Value="_details.FacilityDetails.Coordinates.Latitude"
+										<h5>Coordinates</h5>
+										<MudTextField @bind-Value="details.FacilityDetails.Coordinates.Latitude"
 													  Label="Y (Latitude)" Variant="Variant.Outlined"></MudTextField>
-										<ValidationMessage For="@(() => _details.FacilityDetails.Coordinates.Latitude)" />
-										<MudTextField @bind-Value="_details.FacilityDetails.Coordinates.Longitude"
+										<ValidationMessage For="@(() => details.FacilityDetails.Coordinates.Latitude)" />
+										<MudTextField @bind-Value="details.FacilityDetails.Coordinates.Longitude"
 													  Label="X (Longitude)" Variant="Variant.Outlined"></MudTextField>
-										<ValidationMessage For="@(() => _details.FacilityDetails.Coordinates.Longitude)" />
+										<ValidationMessage For="@(() => details.FacilityDetails.Coordinates.Longitude)" />
 									}
 								</div>
 							</div>
 						</section>
 						<section class="d-flex flex-column gap-3">
 							<div class="inner-container">
-								<MudTextField @bind-value="_details.FacilityDetails.LGA" Label="LGA"
+								<h5>Details</h5>
+								<MudTextField @bind-value="details.FacilityDetails.LGA" Label="LGA"
 											  Variant="Variant.Outlined" ReadOnly=true></MudTextField>
-								<MudTextField @bind-Value="_details.FacilityDetails.SiteName" Label="Site name"
+								<MudTextField @bind-Value="details.FacilityDetails.SiteName" Label="Site name"
 											  Variant="Variant.Outlined"></MudTextField>
-								<ValidationMessage For="@(() => _details.FacilityDetails.SiteName)" />
-								<MudTextField @bind-Value="_details.FacilityDetails.Owner" Label="Owner"
+								<ValidationMessage For="@(() => details.FacilityDetails.SiteName)" />
+								<MudTextField @bind-Value="details.FacilityDetails.Owner" Label="Owner"
 											  Variant="Variant.Outlined"></MudTextField>
-								<ValidationMessage For="@(() => _details.FacilityDetails.Owner)" />
-								<MudTextField @bind-Value="_details.FacilityDetails.Operator" Label="Operator"
+								<ValidationMessage For="@(() => details.FacilityDetails.Owner)" />
+								<MudTextField @bind-Value="details.FacilityDetails.Operator" Label="Operator"
 											  Variant="Variant.Outlined"></MudTextField>
-								<ValidationMessage For="@(() => _details.FacilityDetails.Operator)" />
-								<MudSelect @bind-Value="_details.FacilityDetails.StatusId" Label="Status" Class="mb-3" FitContent="true"
+								<ValidationMessage For="@(() => details.FacilityDetails.Operator)" />
+								<MudSelect @bind-Value="details.FacilityDetails.StatusId" Label="Status" Class="mb-3" FitContent="true"
 										   Variant="Variant.Outlined">
-									@foreach (var status in _details.Statuses)
+									@foreach (var status in details.Statuses)
 									{
 										<MudSelectItem Value="status.Id">@status.StatusName</MudSelectItem>
 									}
 								</MudSelect>
-								<ValidationMessage For="@(() => _details.FacilityDetails.StatusId)" />
+								<ValidationMessage For="@(() => details.FacilityDetails.StatusId)" />
 
-								<MudTextField @bind-Value="_details.FacilityDetails.Notes" Label="Notes" Variant="Variant.Outlined"
+								<MudTextField @bind-Value="details.FacilityDetails.Notes" Label="Notes" Variant="Variant.Outlined"
 											  Lines="5"></MudTextField>
-								<ValidationMessage For="@(() => _details.FacilityDetails.Notes)" />
+								<ValidationMessage For="@(() => details.FacilityDetails.Notes)" />
 							</div>
 							<div class="inner-container">
 								<h5>Related Assests</h5>
-								<MudTable Items="_details.RelatedAssets" Hover=true>
+								<MudTable Items="details.RelatedAssets" Hover=true>
 									<HeaderContent>
 										<MudTh>Asset Ref</MudTh>
 										<MudTh>Alternative Id</MudTh>
@@ -100,7 +99,7 @@
 							</div>
 							<div class="inner-container">
 								<h5>Sub Spaces</h5>
-								<MudTable Items="_details.FacilitySubSpaces" Hover=true>
+								<MudTable Items="details.FacilitySubSpaces" Hover=true>
 									<HeaderContent>
 										<MudTh>Space Name</MudTh>
 									</HeaderContent>
@@ -113,7 +112,7 @@
 					</div>
 					<AuthorizeView Roles=@($"{RoleConstants.FullUser}, {RoleConstants.AdminUser}") Context="authContext">
 						<div class="text-end mt-3">
-							<MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled=_isSaving StartIcon="@Icons.Material.Filled.Save">Save Details</MudButton>
+							<MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled=isSaving StartIcon="@Icons.Material.Filled.Save">Save Details</MudButton>
 						</div>
 					</AuthorizeView>
 				</EditForm>
@@ -127,10 +126,10 @@
 			</div>
 		</TitleContent>
 		<ChildContent>
-			@if (_details is not null)
+			@if (details is not null)
 			{
 				<div class="inner-container">
-					<MudDataGrid T="PartialAssessmentLogDto" Items="_details.AssessmentLogs" Hover="true">
+					<MudDataGrid T="PartialAssessmentLogDto" Items="details.AssessmentLogs" Hover="true">
 						<Columns>
 							<PropertyColumn Property="x => x.Use" Title="Use" />
 							<PropertyColumn Property="x => x.AccessType" Title="Access Type" />

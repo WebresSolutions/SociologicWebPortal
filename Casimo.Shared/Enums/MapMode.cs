@@ -1,6 +1,6 @@
 ﻿namespace Casimo.Shared.Enums;
 
-public enum ShowModeEnum
+public enum MapMode
 {
     Single,
     All
