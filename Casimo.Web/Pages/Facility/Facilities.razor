@@ -48,7 +48,7 @@
 					<MudDataGridPager T="FacilityListItemDto" />
 				</PagerContent>
 			</MudDataGrid>
-			<FacilitiesMap OnUpdateCoords="() => Console.Write(true)"  ShowMode="ShowModeEnum.All" DefaultDetails=null/>
+			<FacilitiesMap OnUpdateCoords="() => Console.Write(true)" ShowMode="MapMode.All" DefaultDetails=null OnMarkerClick="@NavigateToFacility" />
 		</div>
 	</ChildContent>
 </Card>

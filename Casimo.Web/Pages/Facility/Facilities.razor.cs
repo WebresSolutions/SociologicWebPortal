@@ -185,4 +185,14 @@ public partial class Facilities // This inherits BaseDataComponent as per your .
         _sessionData = new FacilitiesSessionData(); // Reset to defaults
         return _grid!.ReloadServerData();
     }
+
+    /// <summary>
+    /// Handles marker click navigation to facility details page
+    /// </summary>
+    /// <param name="facilityId">The facility ID to navigate to</param>
+    private Task NavigateToFacility(int facilityId)
+    {
+        _navigationManager.NavigateTo($"/Facilities/{facilityId}");
+        return Task.CompletedTask;
+    }
 }

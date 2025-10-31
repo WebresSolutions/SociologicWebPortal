@@ -33,7 +33,7 @@ public partial class FacilitiesMap : IDisposable
     /// The show mode for the map. All or Single
     /// </summary>
     [Parameter]
-    public required ShowModeEnum ShowMode { get; set; }
+    public required MapMode ShowMode { get; set; }
 
     /// <summary>
     /// If using a single facility, callback when coordinates are updated
@@ -41,11 +41,17 @@ public partial class FacilitiesMap : IDisposable
     [Parameter]
     public EventCallback<FacilityCoords> OnUpdateCoords { get; set; }
 
+    /// <summary>
+    /// Event callback when a marker is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> OnMarkerClick { get; set; }
+
     #region Private Fields
     /// <summary>
     /// Previous ShowMode to detect changes
     /// </summary>
-    private ShowModeEnum? previousShowMode;
+    private MapMode? previousShowMode;
 
     /// <summary>
     /// A list of lgaid in the database with counts
@@ -152,11 +158,11 @@ public partial class FacilitiesMap : IDisposable
         {
             mapOptions!.Center = new LatLngLiteral(DefaultDetails.Coordinates.Latitude ?? 0, DefaultDetails.Coordinates.Longitude ?? 0);
         }
+        // Reload markers with the new mode without changing zoom
+        await ReloadMarkersAsync(preserveZoom: true);
         // Check if ShowMode changed and we need to reload markers
         if (previousShowMode.HasValue && previousShowMode.Value != ShowMode && markersLoaded && !string.IsNullOrEmpty(selectedLGAid))
         {
-            // Reload markers with the new mode without changing zoom
-            await ReloadMarkersAsync(preserveZoom: true);
         }
         previousShowMode = ShowMode;
     }
@@ -187,7 +193,7 @@ public partial class FacilitiesMap : IDisposable
 
         await ClearMarkers();
 
-        if (ShowMode is ShowModeEnum.Single && DefaultDetails is not null)
+        if (ShowMode is MapMode.Single && DefaultDetails is not null)
             facilities = [.. facilities.Where(x => x.Id == DefaultDetails.FacilityId)];
 
         await LoadMapMarkersClustered(preserveZoom);
@@ -250,7 +256,7 @@ public partial class FacilitiesMap : IDisposable
 
             foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> kvp in markers)
             {
-                listenerTasks.Add(kvp.Value.AddListener("click", () => OnMarkerClick(kvp.Key.Id)));
+                listenerTasks.Add(kvp.Value.AddListener("click", () => OnClickListener(kvp.Key.Id)));
 
                 // Only add dragend listener for the default facility
                 if (kvp.Key.Id == DefaultDetails?.FacilityId)
@@ -374,10 +380,10 @@ public partial class FacilitiesMap : IDisposable
     /// <summary>
     /// When the marker is clicked, navigate to the facility details page
     /// </summary>
-    private void OnMarkerClick(int facilityId) => _navigationManager.NavigateTo($"/Facilities/{facilityId}", true);
+    private async Task OnClickListener(int facilityId) => await InvokeAsync(() => OnMarkerClick.InvokeAsync(facilityId));
 
     /// <summary>
-    /// The the map to fit the bounds of the markers
+    /// The map to fit the bounds of the markers
     /// </summary>
     /// <returns></returns>
     private async Task FitBounds()
