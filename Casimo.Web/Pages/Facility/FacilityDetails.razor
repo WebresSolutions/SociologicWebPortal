@@ -30,10 +30,11 @@
 									<MudToggleItem Value="@(ShowModeEnum.Single)" Text="Single" />
 									<MudToggleItem Value="@(ShowModeEnum.All)" Text="All Facilities" />
 								</MudToggleGroup>
-								<MapView LGAFilter="@_details.FacilityDetails.LGA" DefaultDetails="@_details.FacilityDetails" ShowMode="@_showmode" OnUpdateCoords=@CoordsUpdated />
+								<FacilitiesMap LGAFilter="@_details.FacilityDetails.LGA" DefaultDetails="@_details.FacilityDetails" ShowMode="@_showmode" OnUpdateCoords=@CoordsUpdated />
 							</div>
 							<div class="facility-address">
 								<div class="inner-container">
+									<h5>Address</h5>
 									<MudTextField @bind-Value="_details.FacilityDetails.StreetAddress" Label="Street Address"
 												  Variant="Variant.Outlined"></MudTextField>
 									<ValidationMessage For="@(() => _details.FacilityDetails.StreetAddress)" />
@@ -47,6 +48,7 @@
 								<div class="inner-container">
 									@if (_details.FacilityDetails.Coordinates is not null)
 									{
+										<h5>Coordinates</h5>
 										<MudTextField @bind-Value="_details.FacilityDetails.Coordinates.Latitude"
 													  Label="Y (Latitude)" Variant="Variant.Outlined"></MudTextField>
 										<ValidationMessage For="@(() => _details.FacilityDetails.Coordinates.Latitude)" />
@@ -59,6 +61,7 @@
 						</section>
 						<section class="d-flex flex-column gap-3">
 							<div class="inner-container">
+								<h5>Details</h5>
 								<MudTextField @bind-value="_details.FacilityDetails.LGA" Label="LGA"
 											  Variant="Variant.Outlined" ReadOnly=true></MudTextField>
 								<MudTextField @bind-Value="_details.FacilityDetails.SiteName" Label="Site name"

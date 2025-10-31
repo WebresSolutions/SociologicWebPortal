@@ -9,7 +9,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace Casimo.Web.Components.Facilities;
 
-public partial class MapView : IDisposable
+/// <summary>
+/// Extends the google maps component to show facility markers.
+/// Shows a map of facilities with markers.
+/// If supplied with a DefaultDetails parameter, shows only that facility in Single mode.
+/// Otherwise shows all facilities in the selected LGA in All mode.
+/// </summary>
+public partial class FacilitiesMap : IDisposable
 {
     /// <summary>
     /// Optional LGA filter to pre-select on load
@@ -98,10 +104,20 @@ public partial class MapView : IDisposable
     /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
+        // Set initial center - use DefaultDetails coordinates if available, otherwise use default
+        LatLngLiteral initialCenter = new(-37.8162, 144.9640);
+        if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
+        {
+            initialCenter = new LatLngLiteral(
+                DefaultDetails.Coordinates.Latitude ?? initialCenter.Lat,
+                DefaultDetails.Coordinates.Longitude ?? initialCenter.Lng
+            );
+        }
+
         mapOptions = new()
         {
             Zoom = 13,
-            Center = new LatLngLiteral(-37.8162, 144.9640),
+            Center = initialCenter,
             MapTypeId = MapTypeId.Roadmap,
             MapId = Guid.NewGuid().ToString()
         };
@@ -246,9 +262,41 @@ public partial class MapView : IDisposable
 
             await Task.WhenAll(listenerTasks);
 
-            // Only fit bounds if we're not preserving zoom (i.e., on initial load or LGA change)
-            if (!preserveZoom && DefaultDetails is null)
-                await FitBounds();
+            // Center the map appropriately based on the context
+            if (!preserveZoom)
+            {
+                if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
+                {
+                    // Find the default facility marker position from the loaded markers
+                    KeyValuePair<FacilityCoords, AdvancedMarkerElement> defaultMarker = markers.FirstOrDefault(m => m.Key.Id == DefaultDetails.FacilityId);
+
+                    if (defaultMarker.Value != null)
+                    {
+                        // Get the actual marker position
+                        LatLngAltitudeLiteral markerPosition = await defaultMarker.Value.GetPosition();
+                        LatLngLiteral defaultPosition = new(markerPosition.Lat, markerPosition.Lng);
+
+                        // Center on the default facility marker with appropriate zoom
+                        await map.InteropObject.PanTo(defaultPosition);
+                        await map.InteropObject.SetZoom(15); // Zoom in closer for individual marker
+                    }
+                    else
+                    {
+                        // Fallback to DefaultDetails coordinates if marker not found
+                        LatLngLiteral defaultPosition = new(
+                            DefaultDetails.Coordinates.Latitude ?? 0,
+                            DefaultDetails.Coordinates.Longitude ?? 0
+                        );
+                        await map.InteropObject.PanTo(defaultPosition);
+                        await map.InteropObject.SetZoom(15);
+                    }
+                }
+                else
+                {
+                    // Fit bounds to show all markers
+                    await FitBounds();
+                }
+            }
 
             markersLoaded = true;
         }
@@ -258,6 +306,10 @@ public partial class MapView : IDisposable
         }
     }
 
+    /// <summary>
+    /// Clears the markers fro mthe map
+    /// </summary>
+    /// <returns></returns>
     private async Task ClearMarkers()
     {
         // First, dispose of marker clustering if it exists
@@ -273,7 +325,12 @@ public partial class MapView : IDisposable
         {
             await Task.WhenAll(markers.Select(m => m.Value.SetMap(null)));
             foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> marker in markers)
+            {
+                // Keep the default facility marker if needed
+                if (marker.Key.Id == DefaultDetails?.FacilityId)
+                    continue;
                 marker.Value.Dispose();
+            }
 
             markers.Clear();
         }
