@@ -237,7 +237,8 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
             .AsNoTracking()
             .AsQueryable();
 
-        if (!httpContext.User.IsInRole(RoleConstants.AdminUser))
+        bool authenticated = httpContext.User.Identity?.IsAuthenticated ?? false;
+        if (authenticated && !httpContext.User.IsInRole(RoleConstants.AdminUser))
         {
             // Get the user Id
             int userId = await httpContext.UserCasimoId(_casimoDbContext);

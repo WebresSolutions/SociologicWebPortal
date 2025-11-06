@@ -5,6 +5,7 @@ using Casimo.Shared.ApiModels.FitForPurpose;
 using Casimo.Shared.Constants;
 using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Casimo.Server.Controllers;
@@ -62,7 +63,7 @@ public static class FacilitiesEndpoints
 
                     return EndpointsHelper.ProcessResult(res, "An Error occured while loading facility details");
                 })
-            .RequireAuthorization();
+            .AllowAnonymous();
 
         _ = facilitiesGroup.MapPost("",
         async (
@@ -83,7 +84,7 @@ public static class FacilitiesEndpoints
 
             return EndpointsHelper.ProcessResult(res, "An Error occurred while loading facility details");
         })
-        .RequireAuthorization(PolicyConstants.AdminOnly);
+        .AllowAnonymous();
 
         _ = facilitiesGroup.MapGet(
             "/LGAids",
@@ -91,7 +92,8 @@ public static class FacilitiesEndpoints
             {
                 LGAidCounts[] lgaIdCounts = await facilitiesService.GetLgAids(httpContext);
                 return Results.Ok(lgaIdCounts);
-            });
+            })
+        .AllowAnonymous();
 
         _ = facilitiesGroup.MapGet(
             "/LGAid",
@@ -99,6 +101,7 @@ public static class FacilitiesEndpoints
             {
                 FacilityCoords[] lgaIdCounts = await facilitiesService.GetLgAidFacility(lgAid);
                 return Results.Ok(lgaIdCounts);
-            });
+            })
+        .AllowAnonymous();
     }
 }
