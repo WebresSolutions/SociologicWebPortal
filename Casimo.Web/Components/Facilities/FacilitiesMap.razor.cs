@@ -48,6 +48,8 @@ public partial class FacilitiesMap : IDisposable
     public EventCallback<int> OnMarkerClick { get; set; }
 
     #region Private Fields
+    private bool isLoading = false;
+
     /// <summary>
     /// Previous ShowMode to detect changes
     /// </summary>
@@ -131,7 +133,7 @@ public partial class FacilitiesMap : IDisposable
         if (lgaids.Length == 0)
         {
             Result<LGAidCounts[]> result = await _apiService.GetLgAids();
-            lgaids = result.Value ?? [];
+            lgaids = result.Value?.OrderByDescending(x => x.LGAidName).ToArray() ?? [];
         }
 
         // Only reload markers if LGAFilter actually changed
@@ -154,27 +156,14 @@ public partial class FacilitiesMap : IDisposable
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
-        if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
-        {
-            mapOptions!.Center = new LatLngLiteral(DefaultDetails.Coordinates.Latitude ?? 0, DefaultDetails.Coordinates.Longitude ?? 0);
-        }
-        // Reload markers with the new mode without changing zoom
-        await ReloadMarkersAsync(preserveZoom: true);
-        // Check if ShowMode changed and we need to reload markers
-        if (previousShowMode.HasValue && previousShowMode.Value != ShowMode && markersLoaded && !string.IsNullOrEmpty(selectedLGAid))
-        {
-        }
-        previousShowMode = ShowMode;
-    }
 
-    /// <summary>
-    /// Public method to reload markers - can be called externally
-    /// </summary>
-    /// <param name="preserveZoom">If true, preserves the current zoom level when reloading</param>
-    public async Task ReloadMarkersAsync(bool preserveZoom = false)
-    {
-        if (!string.IsNullOrEmpty(selectedLGAid))
-            await ValueChanged(selectedLGAid, preserveZoom);
+        if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
+            mapOptions!.Center = new LatLngLiteral(DefaultDetails.Coordinates.Latitude ?? 0, DefaultDetails.Coordinates.Longitude ?? 0);
+
+        if ((previousShowMode != ShowMode || !markersLoaded) && !string.IsNullOrEmpty(selectedLGAid))
+            await ValueChanged(selectedLGAid, true);
+
+        previousShowMode = ShowMode;
     }
 
     /// <summary>
@@ -188,13 +177,14 @@ public partial class FacilitiesMap : IDisposable
         selectedLGAid = lgAid;
         // Load the facilities now for the selected LGAid
         Result<FacilityCoords[]> facilitiesResult = await _apiService.GetFacilitesForLgAId(selectedLGAid);
+
         if (facilitiesResult.IsSuccess && facilitiesResult.Value is not null)
             facilities = facilitiesResult.Value;
 
         await ClearMarkers();
 
         if (ShowMode is MapMode.Single && DefaultDetails is not null)
-            facilities = [.. facilities.Where(x => x.Id == DefaultDetails.FacilityId)];
+            facilities = [.. facilities.Where(x => x.FacilityID == DefaultDetails.FacilityId)];
 
         await LoadMapMarkersClustered(preserveZoom);
     }
@@ -211,6 +201,9 @@ public partial class FacilitiesMap : IDisposable
             if (map?.InteropObject is null || facilities.Length is 0)
                 return;
 
+            isLoading = true;
+            await InvokeAsync(StateHasChanged);
+
             bounds = await LatLngBounds.CreateAsync(map.JsRuntime);
 
             // Create all marker tasks in parallel using LINQ
@@ -218,7 +211,7 @@ public partial class FacilitiesMap : IDisposable
             {
                 double lat = facility.latitude;
                 LatLngLiteral latLng = new(lat, facility.longitude);
-                bool isDefaultFacility = facility.Id == DefaultDetails?.FacilityId;
+                bool isDefaultFacility = facility.FacilityID == DefaultDetails?.FacilityId;
                 string content = WebHelpers.FormatCoordinate(facility.Name, isDefaultFacility);
 
                 Task<AdvancedMarkerElement> markerTask = AdvancedMarkerElement.CreateAsync(map.JsRuntime, new AdvancedMarkerElementOptions()
@@ -233,6 +226,9 @@ public partial class FacilitiesMap : IDisposable
                 return (MarkerTask: markerTask, Facility: facility, Position: latLng);
             })];
 
+            if (markers.Any(x => x.Key.FacilityID == DefaultDetails?.FacilityId))
+                markerData = [.. markerData.Where(x => x.Facility.FacilityID != DefaultDetails?.FacilityId)];
+
             // Await all markers to be created
             AdvancedMarkerElement[] completedMarkers = await Task.WhenAll(markerData.Select(m => m.MarkerTask));
 
@@ -244,22 +240,28 @@ public partial class FacilitiesMap : IDisposable
                 .Zip(markerData, (marker, data) => (marker, data.Facility))
                 .ToDictionary(x => x.Facility, x => x.marker);
 
-            // Create marker clustering
-            markerClustering = await MarkerClustering.CreateAsync(
-                map.JsRuntime,
-                map.InteropObject,
-                markers.Values
-            );
-
+            if (markerClustering is null)
+            {
+                // Create marker clustering
+                markerClustering = await MarkerClustering.CreateAsync(
+                    map.JsRuntime,
+                    map.InteropObject,
+                    markers.Values
+                );
+            }
+            else
+            {
+                await markerClustering.AddMarkers(markers.Values);
+            }
             // Add all event listeners in parallel
             List<Task> listenerTasks = new(markers.Count * 2);
 
             foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> kvp in markers)
             {
-                listenerTasks.Add(kvp.Value.AddListener("click", () => OnClickListener(kvp.Key.Id)));
+                listenerTasks.Add(kvp.Value.AddListener("click", async () => await OnClickListener(kvp.Key.FacilityID)));
 
                 // Only add dragend listener for the default facility
-                if (kvp.Key.Id == DefaultDetails?.FacilityId)
+                if (kvp.Key.FacilityID == DefaultDetails?.FacilityId)
                     listenerTasks.Add(kvp.Value.AddListener<MouseEvent>("dragend", async (e) =>
                     {
                         await HandleDragEnd(e, kvp);
@@ -274,7 +276,7 @@ public partial class FacilitiesMap : IDisposable
                 if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
                 {
                     // Find the default facility marker position from the loaded markers
-                    KeyValuePair<FacilityCoords, AdvancedMarkerElement> defaultMarker = markers.FirstOrDefault(m => m.Key.Id == DefaultDetails.FacilityId);
+                    KeyValuePair<FacilityCoords, AdvancedMarkerElement> defaultMarker = markers.FirstOrDefault(m => m.Key.FacilityID == DefaultDetails.FacilityId);
 
                     if (defaultMarker.Value != null)
                     {
@@ -310,6 +312,14 @@ public partial class FacilitiesMap : IDisposable
         {
             Console.WriteLine($"Error setting up markers: {ex.Message}");
         }
+        finally
+        {
+            if (isLoading)
+            {
+                isLoading = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
     }
 
     /// <summary>
@@ -321,9 +331,8 @@ public partial class FacilitiesMap : IDisposable
         // First, dispose of marker clustering if it exists
         if (markerClustering is not null)
         {
-            await markerClustering.ClearMarkers();
-            await markerClustering.DisposeAsync();
-            markerClustering = null;
+            await markerClustering.ClearMarkers(true);
+            //markerClustering = null;
         }
 
         // Then clear individual markers
@@ -333,12 +342,13 @@ public partial class FacilitiesMap : IDisposable
             foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> marker in markers)
             {
                 // Keep the default facility marker if needed
-                if (marker.Key.Id == DefaultDetails?.FacilityId)
+                if (marker.Key.FacilityID == DefaultDetails?.FacilityId)
                     continue;
+
                 marker.Value.Dispose();
             }
-
-            markers.Clear();
+            if (markers.Any(x => x.Key.FacilityID == DefaultDetails?.FacilityId))
+                markers = markers.Where(x => x.Key.FacilityID != DefaultDetails?.FacilityId).ToDictionary(x => x.Key, x => x.Value);
         }
 
         markersLoaded = false;
@@ -353,13 +363,15 @@ public partial class FacilitiesMap : IDisposable
         FacilityCoords updatedCoords = marker.Key with
         {
             latitude = newPosition.Lat,
-            longitude = newPosition.Lng
+            longitude = newPosition.Lng,
+            FacilityID = marker.Key.FacilityID,
+            Name = marker.Key.Name
         };
 
         // Update the facilities array to reflect the new coordinates
         for (int i = 0; i < facilities.Length; i++)
         {
-            if (facilities[i].Id == marker.Key.Id)
+            if (facilities[i].FacilityID == marker.Key.FacilityID)
             {
                 facilities[i] = updatedCoords;
                 break;
@@ -368,9 +380,7 @@ public partial class FacilitiesMap : IDisposable
 
         // Update the dictionary key by removing old entry and adding new one
         if (markers.Remove(marker.Key))
-        {
             markers[updatedCoords] = marker.Value;
-        }
 
         // Don't modify the DefaultCoord parameter - it's bound from parent
         // Just invoke the callback to notify parent of the change

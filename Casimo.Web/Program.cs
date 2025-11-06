@@ -16,9 +16,14 @@ builder.Services.Configure<GoogleMaps>(builder.Configuration.GetSection("WebOpti
 string httpClient = builder.Configuration.GetValue<string>("HttpClient")
     ?? throw new Exception("Failed to load the http client settings");
 
+// HttpClient for authenticated requests
 builder.Services.AddHttpClient(httpClient)
     .ConfigureHttpClient(client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
     .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>();
+
+// HttpClient for anonymous requests (no authorization handler)
+builder.Services.AddHttpClient("Anonymous")
+    .ConfigureHttpClient(client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));
 
 // Supply HttpClient instances that include access tokens when making requests to the server project.
 builder.Services.AddScoped(provider =>

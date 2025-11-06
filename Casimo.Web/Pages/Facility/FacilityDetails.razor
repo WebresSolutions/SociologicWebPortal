@@ -59,7 +59,7 @@
 							<div class="inner-container">
 								<h5>Details</h5>
 								<MudTextField @bind-value="details.FacilityDetails.LGA" Label="LGA"
-											  Variant="Variant.Outlined" ReadOnly=true></MudTextField>
+											  Variant="Variant.Outlined" Disabled=true></MudTextField>
 								<MudTextField @bind-Value="details.FacilityDetails.SiteName" Label="Site name"
 											  Variant="Variant.Outlined"></MudTextField>
 								<ValidationMessage For="@(() => details.FacilityDetails.SiteName)" />

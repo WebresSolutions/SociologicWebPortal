@@ -6,12 +6,27 @@ using Casimo.Shared.ApiModels.User;
 using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 using Casimo.Web.Services.Interfaces;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 
 namespace Casimo.Web.Services.Instances;
 
-public class ApiService(HttpClient _httpClient) : IApiService
+public class ApiService : IApiService
 {
+    private readonly HttpClient _httpClient;
+    private readonly HttpClient _anonymousHttpClient;
+    private readonly NavigationManager _navigationManager;
+
+    public ApiService(IHttpClientFactory httpClientFactory, IConfiguration configuration, NavigationManager navigationManager)
+    {
+        string httpClientName = configuration.GetValue<string>("HttpClient")
+            ?? throw new Exception("Failed to load the http client settings");
+
+        _httpClient = httpClientFactory.CreateClient(httpClientName);
+        _anonymousHttpClient = httpClientFactory.CreateClient("Anonymous");
+        _navigationManager = navigationManager;
+    }
     /// <summary>
     /// Gets all application users
     /// </summary>
@@ -188,7 +203,7 @@ public class ApiService(HttpClient _httpClient) : IApiService
         Result<FacilityDTO> res = new();
         try
         {
-            HttpResponseMessage response = await _httpClient.GetAsync($"api/Facilities/{facilityId}");
+            HttpResponseMessage response = await _anonymousHttpClient.GetAsync($"api/Facilities/{facilityId}");
             if (response.IsSuccessStatusCode)
             {
                 FacilityDTO? facilities = await response.Content.ReadFromJsonAsync<FacilityDTO>();
@@ -219,7 +234,7 @@ public class ApiService(HttpClient _httpClient) : IApiService
         Result<FacilityDTO> res = new();
         try
         {
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"api/Facilities", req);
+            HttpResponseMessage response = await _anonymousHttpClient.PostAsJsonAsync($"api/Facilities", req);
             if (response.IsSuccessStatusCode)
             {
                 FacilityDTO? facilities = await response.Content.ReadFromJsonAsync<FacilityDTO>();
@@ -565,7 +580,7 @@ public class ApiService(HttpClient _httpClient) : IApiService
         Result<LGAidCounts[]> res = new();
         try
         {
-            LGAidCounts[]? response = await _httpClient.GetFromJsonAsync<LGAidCounts[]>($"api/Facilities/LGAids");
+            LGAidCounts[]? response = await _anonymousHttpClient.GetFromJsonAsync<LGAidCounts[]>($"api/Facilities/LGAids");
             if (response is not null)
             {
                 res.Value = response;
@@ -595,7 +610,7 @@ public class ApiService(HttpClient _httpClient) : IApiService
         Result<FacilityCoords[]> res = new();
         try
         {
-            FacilityCoords[]? response = await _httpClient.GetFromJsonAsync<FacilityCoords[]>($"api/Facilities/LGAid?{querystring}");
+            FacilityCoords[]? response = await _anonymousHttpClient.GetFromJsonAsync<FacilityCoords[]>($"api/Facilities/LGAid?{querystring}");
             if (response is not null)
             {
                 res.Value = response;
@@ -611,6 +626,12 @@ public class ApiService(HttpClient _httpClient) : IApiService
             // Handle exception
         }
         return res;
+    }
+
+    private async Task NavigationToLoginPage()
+    {
+        _navigationManager.NavigateTo("Identity/Account/Login", true);
+        await Task.CompletedTask;
     }
 }
 
