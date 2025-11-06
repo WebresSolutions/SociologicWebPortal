@@ -11,6 +11,8 @@ public class Coordinates
     /// </summary>
     public Coordinates()
     {
+        Latitude = -37.8162;
+        Longitude = 144.9640;
     }
 
     /// <summary>
