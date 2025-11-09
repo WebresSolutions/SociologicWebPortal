@@ -4,10 +4,17 @@ namespace Casimo.Web.Services.Instances;
 /// <summary>
 /// This object provides simple in-memory session storage for the duration of the user's session
 /// Does not persist between sessions. So it is only used to store temporary state while the user is active.
+/// Used for holding data that should not be persisted long-term. Search params, temporary selections, etc.
 /// </summary>
 public class SessionStorage
 {
+    /// <summary>
+    /// Dictionary to hold session data
+    /// </summary>
     private readonly Dictionary<string, object> _storage = [];
+    /// <summary>
+    /// Prevents concurrent access
+    /// </summary>
     private readonly Lock _lock = new();
 
     /// <summary>

@@ -7,7 +7,6 @@ using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 using Casimo.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
 
 namespace Casimo.Web.Services.Instances;
@@ -43,6 +42,9 @@ public class ApiService : IApiService
             }
             else
             {
+                if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                    await NavigationToLoginPage();
+
                 result.ConvertHttpResponseToError(response.StatusCode);
                 result.ErrorDescription = await response.Content.ReadAsStringAsync() ?? "Failed to get the user details";
             }
@@ -72,6 +74,9 @@ public class ApiService : IApiService
             }
             else
             {
+                if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                    await NavigationToLoginPage();
+
                 result.ConvertHttpResponseToError(response.StatusCode);
                 result.ErrorDescription = await response.Content.ReadAsStringAsync() ?? "Failed to get the user details";
             }
@@ -96,6 +101,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"api/UserManager/User/{userId}", req);
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 res.Value = await response.Content.ReadFromJsonAsync<ManageUserDetailsDto>();
@@ -123,6 +132,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage response = await _httpClient.GetAsync($"api/UserManager/Roles");
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 List<UserRolesDto> roles = await response.Content.ReadFromJsonAsync<List<UserRolesDto>>() ?? [];
@@ -173,6 +186,10 @@ public class ApiService : IApiService
             string queryString = await dictFormUrlEncoded.ReadAsStringAsync();
 
             HttpResponseMessage response = await _httpClient.GetAsync($"api/Facilities/All?{queryString}");
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 PagedResponse<FacilityListItemDto>? facilities = await response.Content.ReadFromJsonAsync<PagedResponse<FacilityListItemDto>>();
@@ -204,6 +221,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage response = await _anonymousHttpClient.GetAsync($"api/Facilities/{facilityId}");
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 FacilityDTO? facilities = await response.Content.ReadFromJsonAsync<FacilityDTO>();
@@ -235,6 +256,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage response = await _anonymousHttpClient.PostAsJsonAsync($"api/Facilities", req);
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 FacilityDTO? facilities = await response.Content.ReadFromJsonAsync<FacilityDTO>();
@@ -267,6 +292,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage response = await _httpClient.GetAsync($"api/SuitabilityAssessment/{assessmentId}");
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 AssessmentLogDetailDto? ffpAssessment = await response.Content.ReadFromJsonAsync<AssessmentLogDetailDto>();
@@ -298,6 +327,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"api/SuitabilityAssessment/SaveQuestionResponse", req);
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 AssessmentLogDetailDto? ffpAssessment = await response.Content.ReadFromJsonAsync<AssessmentLogDetailDto>();
@@ -329,6 +362,7 @@ public class ApiService : IApiService
         try
         {
             List<UserAssessmentListDto>? response = await _httpClient.GetFromJsonAsync<List<UserAssessmentListDto>>($"api/SuitabilityAssessment/UserAssessments/{userId}");
+
             if (response is not null)
             {
                 res.Value = response;
@@ -337,6 +371,11 @@ public class ApiService : IApiService
             {
                 res.ErrorDescription = "Failed to get the users assigned assessments list";
             }
+        }
+        catch (HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
         }
         catch (Exception ex)
         {
@@ -366,6 +405,11 @@ public class ApiService : IApiService
                 res.ErrorDescription = "Failed to get the users assessment list";
             }
         }
+        catch (HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
@@ -394,10 +438,14 @@ public class ApiService : IApiService
                 res.ErrorDescription = "Failed to get the users assessment list";
             }
         }
+        catch (HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
-            // Handle exception
         }
 
         return res;
@@ -414,6 +462,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"api/UserManager/InviteUserToAssessmentList", req);
+
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (response.IsSuccessStatusCode)
             {
                 bool? isSuccess = await response.Content.ReadFromJsonAsync<bool>();
@@ -428,7 +480,6 @@ public class ApiService : IApiService
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
-            // Handle exception
         }
         return res;
     }
@@ -453,10 +504,14 @@ public class ApiService : IApiService
                 res.ErrorDescription = "Failed to get the users assessment list";
             }
         }
+        catch (HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
-            // Handle exception
         }
         return res;
     }
@@ -481,10 +536,14 @@ public class ApiService : IApiService
                 res.ErrorDescription = "Failed to get the users assessment list";
             }
         }
+        catch (HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
-            // Handle exception
         }
         return res;
     }
@@ -500,6 +559,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage saveResult = await _httpClient.PostAsJsonAsync($"api/SuitabilityAssessment/AssessmentList", req);
+
+            if (saveResult.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (saveResult is not null)
             {
                 res.Value = await saveResult.Content.ReadFromJsonAsync<AssessmentListResponseDto>();
@@ -528,6 +591,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage? deleteResult = await _httpClient.DeleteAsync($"api/UserManager/RemoveUserFromList/{userId}/{listId}");
+
+            if (deleteResult.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (deleteResult is not null)
             {
                 res.Value = await deleteResult.Content.ReadFromJsonAsync<bool>();
@@ -555,6 +622,10 @@ public class ApiService : IApiService
         try
         {
             HttpResponseMessage? deleteResult = await _httpClient.DeleteAsync($"api/SuitabilityAssessment/AssessmentList/{listId}");
+
+            if (deleteResult.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+
             if (deleteResult is not null)
             {
                 res.Value = await deleteResult.Content.ReadFromJsonAsync<bool>();
@@ -590,10 +661,14 @@ public class ApiService : IApiService
                 res.ErrorDescription = "Failed to get the LGAid counts";
             }
         }
+        catch (HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
-            // Handle exception
         }
         return res;
     }
@@ -611,6 +686,7 @@ public class ApiService : IApiService
         try
         {
             FacilityCoords[]? response = await _anonymousHttpClient.GetFromJsonAsync<FacilityCoords[]>($"api/Facilities/LGAid?{querystring}");
+
             if (response is not null)
             {
                 res.Value = response;
@@ -620,18 +696,23 @@ public class ApiService : IApiService
                 res.ErrorDescription = "Failed to get the LGAid counts";
             }
         }
+        catch (HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+                await NavigationToLoginPage();
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Exception: {ex.Message}");
-            // Handle exception
         }
         return res;
     }
 
     private async Task NavigationToLoginPage()
     {
-        _navigationManager.NavigateTo("Identity/Account/Login", true);
-        await Task.CompletedTask;
+        string returnUrl = _navigationManager.ToBaseRelativePath(_navigationManager.Uri);
+        string loginUrl = $"{_navigationManager.BaseUri}Identity/Account/Login?returnUrl={returnUrl}";
+        _navigationManager.NavigateTo(loginUrl, true);
     }
 }
 
