@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
-namespace Casimo.Server;
+namespace Casimo.Server.Services.Instances;
 
 /// <summary>
 /// Background service worker for initializing OpenIddict applications
@@ -26,14 +26,14 @@ public class Worker(IServiceProvider _serviceProvider) : IHostedService
         IOptions<ClientOptions> clientOptions = scope.ServiceProvider.GetRequiredService<IOptions<ClientOptions>>();
         ClientOptions options = clientOptions.Value;
 
-        await context.Database.EnsureCreatedAsync(cancellationToken);
+        _ = await context.Database.EnsureCreatedAsync(cancellationToken);
         IOpenIddictApplicationManager? manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
         object? existingApplication = await manager.FindByClientIdAsync(options.ClientId, cancellationToken);
 
         if (existingApplication is null)
         {
             // Create new application
-            await manager.CreateAsync(new OpenIddictApplicationDescriptor
+            _ = await manager.CreateAsync(new OpenIddictApplicationDescriptor
             {
                 ClientId = options.ClientId,
                 ConsentType = ConsentTypes.Implicit,

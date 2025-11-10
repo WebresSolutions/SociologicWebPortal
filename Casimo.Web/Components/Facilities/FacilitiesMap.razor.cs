@@ -194,11 +194,27 @@ public partial class FacilitiesMap : IDisposable
     /// </summary>
     /// <param name="preserveZoom">If true, preserves the current zoom level by not calling FitBounds</param>
     /// <returns></returns>
-    private async Task LoadMapMarkersClustered(bool preserveZoom = false)
+    private async Task LoadMapMarkersClustered(bool preserveZoom = false, int callCount = 0)
     {
         try
         {
-            if (map?.InteropObject is null || facilities.Length is 0)
+            if (facilities.Length == 0)
+                return;
+
+            if (map?.InteropObject is null)
+            {
+                Console.WriteLine("Map not loaded yet. Retrying...");
+                await Task.Delay(500);
+                if (callCount >= 3)
+                {
+                    Console.WriteLine("Max retries reached while loading map markers.");
+                    return;
+                }
+                callCount++;
+                await LoadMapMarkersClustered(preserveZoom, callCount);
+            }
+
+            if (map?.InteropObject is null)
                 return;
 
             isLoading = true;
