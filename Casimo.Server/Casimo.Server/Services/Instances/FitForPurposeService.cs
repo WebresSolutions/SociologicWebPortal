@@ -807,11 +807,7 @@ public class FitForPurposeService(CasimoDbContext _casimoDB, ILogger<FitForPurpo
             }
             else
             {
-                if (questionResponse.ResponseText1 != qres.Response1 || questionResponse.ResponseText2 != qres.Response2
-                    || questionResponse.Selection1Id != qres.SelectionId1 || questionResponse.Selection2Id != qres.SelectionId2)
-
-                    // Update existing response
-                    questionResponse.ResponseText1 = qres.Response1?.Trim();
+                questionResponse.ResponseText1 = qres.Response1?.Trim();
                 questionResponse.ResponseText2 = qres.Response2?.Trim();
                 questionResponse.Selection1Id = qres.SelectionId1;
                 questionResponse.Selection2Id = qres.SelectionId2;
