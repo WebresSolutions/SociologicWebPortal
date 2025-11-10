@@ -8,4 +8,5 @@ public class ClientOptions
     public string PostLogoutRedirectUriHttp { get; set; } = string.Empty;
     public string RedirectUri { get; set; } = string.Empty;
     public string RedirectUriHttp { get; set; } = string.Empty;
+    public string[] ValidAuthorizedIPAddresses { get; set; } = [];
 }

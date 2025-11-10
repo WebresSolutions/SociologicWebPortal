@@ -34,7 +34,6 @@ public class AuthorizationController(
     {
         OpenIddictRequest request = HttpContext.GetOpenIddictServerRequest() ??
                                     throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
-
         // Try to retrieve the user principal stored in the authentication cookie and redirect
         // the user agent to the login page (or to an external provider) in the following cases:
         //
@@ -253,16 +252,10 @@ public class AuthorizationController(
     [HttpPost("~/connect/authorize"), ValidateAntiForgeryToken]
     // Notify OpenIddict that the authorization grant has been denied by the resource owner
     // to redirect the user agent to the client application using the appropriate response_mode.
-    public IActionResult Deny()
-    {
-        return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-    }
+    public IActionResult Deny() => Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
 
     [HttpGet("~/connect/logout")]
-    public IActionResult Logout()
-    {
-        return View();
-    }
+    public IActionResult Logout() => View();
 
     [ActionName(nameof(Logout)), HttpPost("~/connect/logout"), ValidateAntiForgeryToken]
     public async Task<IActionResult> LogoutPost()
@@ -337,7 +330,6 @@ public class AuthorizationController(
 
         // Returning a SignInResult will ask OpenIddict to issue the appropriate access/identity tokens.
         return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-
     }
 
     private static IEnumerable<string> GetDestinations(Claim claim)

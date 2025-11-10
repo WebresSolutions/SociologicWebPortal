@@ -1,12 +1,12 @@
-﻿using Casimo.Server.Helpers;
+﻿using Casimo.Server.ApiData;
+using Casimo.Server.Helpers;
 using Casimo.Server.Services.Interfaces;
 using Casimo.Shared.ApiModels.Facility;
 using Casimo.Shared.ApiModels.FitForPurpose;
-using Casimo.Shared.Constants;
 using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Casimo.Server.Controllers;
 
@@ -68,8 +68,12 @@ public static class FacilitiesEndpoints
         _ = facilitiesGroup.MapPost("",
         async (
             [FromServices] IFacilityService facilitiesService,
+            [FromServices] IOptions<ClientOptions> clientOptions,
+            HttpContext httpContext,
             [FromBody] FacilityDetailsDto req) =>
         {
+            if (!httpContext.AllowedIpAddress(clientOptions.Value.ValidAuthorizedIPAddresses) && !httpContext.IsAutheticated())
+                return Results.Unauthorized();
 
             if (req is null)
                 return Results.BadRequest("Invalid request body");
@@ -88,8 +92,14 @@ public static class FacilitiesEndpoints
 
         _ = facilitiesGroup.MapGet(
             "/LGAids",
-            async ([FromServices] IFacilityService facilitiesService, HttpContext httpContext) =>
+            async (
+                [FromServices] IFacilityService facilitiesService,
+                [FromServices] IOptions<ClientOptions> clientOptions,
+                HttpContext httpContext) =>
             {
+                if (!httpContext.AllowedIpAddress(clientOptions.Value.ValidAuthorizedIPAddresses) && !httpContext.IsAutheticated())
+                    return Results.Unauthorized();
+
                 LGAidCounts[] lgaIdCounts = await facilitiesService.GetLgAids(httpContext);
                 return Results.Ok(lgaIdCounts);
             })
@@ -97,8 +107,15 @@ public static class FacilitiesEndpoints
 
         _ = facilitiesGroup.MapGet(
             "/LGAid",
-            async ([FromServices] IFacilityService facilitiesService, [FromQuery] string lgAid) =>
+            async (
+                [FromServices] IFacilityService facilitiesService,
+                [FromServices] IOptions<ClientOptions> clientOptions,
+                HttpContext httpContext,
+                [FromQuery] string lgAid) =>
             {
+                if (!httpContext.AllowedIpAddress(clientOptions.Value.ValidAuthorizedIPAddresses) && !httpContext.IsAutheticated())
+                    return Results.Unauthorized();
+
                 FacilityCoords[] lgaIdCounts = await facilitiesService.GetLgAidFacility(lgAid);
                 return Results.Ok(lgaIdCounts);
             })
