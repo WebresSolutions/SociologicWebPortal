@@ -1,5 +1,6 @@
 ﻿using Casimo.Server.ApiData;
 using Casimo.Server.Helpers;
+using Casimo.Server.Services.Instances;
 using Casimo.Server.Services.Interfaces;
 using Casimo.Shared.ApiModels.Facility;
 using Casimo.Shared.ApiModels.FitForPurpose;
@@ -54,8 +55,17 @@ public static class FacilitiesEndpoints
                 "/{facilityId}",
         async (
             [FromServices] IFacilityService facilitiesService,
+            [FromServices] IOptions<ClientOptions> clientOptions,
+            [FromServices] ILogger<FacilityService> _logger,
+            HttpContext httpContext,
             [FromRoute] int facilityId) =>
                 {
+                    if (!httpContext.AllowedIpAddress(clientOptions.Value.ValidAuthorizedIPAddresses) && !httpContext.IsAutheticated())
+                    {
+                        _logger.LogError($"Requested from an unauthenticated invalid IP address: {httpContext.Connection.RemoteIpAddress}");
+                        return Results.Unauthorized();
+                    }
+
                     if (facilityId is 0)
                         return Results.BadRequest("Invalid facility id");
 
@@ -69,11 +79,15 @@ public static class FacilitiesEndpoints
         async (
             [FromServices] IFacilityService facilitiesService,
             [FromServices] IOptions<ClientOptions> clientOptions,
+            [FromServices] ILogger<FacilityService> _logger,
             HttpContext httpContext,
             [FromBody] FacilityDetailsDto req) =>
         {
             if (!httpContext.AllowedIpAddress(clientOptions.Value.ValidAuthorizedIPAddresses) && !httpContext.IsAutheticated())
+            {
+                _logger.LogError($"Requested from an unauthenticated invalid IP address: {httpContext.Connection.RemoteIpAddress}");
                 return Results.Unauthorized();
+            }
 
             if (req is null)
                 return Results.BadRequest("Invalid request body");
@@ -95,10 +109,14 @@ public static class FacilitiesEndpoints
             async (
                 [FromServices] IFacilityService facilitiesService,
                 [FromServices] IOptions<ClientOptions> clientOptions,
+                [FromServices] ILogger<FacilityService> _logger,
                 HttpContext httpContext) =>
             {
                 if (!httpContext.AllowedIpAddress(clientOptions.Value.ValidAuthorizedIPAddresses) && !httpContext.IsAutheticated())
+                {
+                    _logger.LogError($"Requested from an unauthenticated invalid IP address: {httpContext.Connection.RemoteIpAddress}");
                     return Results.Unauthorized();
+                }
 
                 LGAidCounts[] lgaIdCounts = await facilitiesService.GetLgAids(httpContext);
                 return Results.Ok(lgaIdCounts);
@@ -110,11 +128,15 @@ public static class FacilitiesEndpoints
             async (
                 [FromServices] IFacilityService facilitiesService,
                 [FromServices] IOptions<ClientOptions> clientOptions,
+                [FromServices] ILogger<FacilityService> _logger,
                 HttpContext httpContext,
                 [FromQuery] string lgAid) =>
             {
                 if (!httpContext.AllowedIpAddress(clientOptions.Value.ValidAuthorizedIPAddresses) && !httpContext.IsAutheticated())
+                {
+                    _logger.LogError($"Requested from an unauthenticated invalid IP address: {httpContext.Connection.RemoteIpAddress}");
                     return Results.Unauthorized();
+                }
 
                 FacilityCoords[] lgaIdCounts = await facilitiesService.GetLgAidFacility(lgAid);
                 return Results.Ok(lgaIdCounts);
