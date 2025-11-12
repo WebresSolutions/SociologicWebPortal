@@ -5,23 +5,23 @@ name: .build_solution
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-      working-directory: ./Casimo.Server
-    - name: Build
-      run: dotnet build --no-restore
-      working-directory: ./Casimo.Server
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./Casimo.Server
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: ./Casimo.Server

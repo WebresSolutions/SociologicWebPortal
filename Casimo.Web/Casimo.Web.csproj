@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 	</PropertyGroup>
 	<PropertyGroup>
 		<InvariantGlobalization>true</InvariantGlobalization>
@@ -23,12 +23,13 @@
 		<WasmApplicationEnvironmentName>Development</WasmApplicationEnvironmentName>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="BlazorGoogleMaps" Version="4.13.6" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.9" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="9.0.9" />
-		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.9" PrivateAssets="all" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.9" />
-		<PackageReference Include="MudBlazor" Version="8.13.0" />
+		<PackageReference Include="BlazorGoogleMaps" Version="4.13.7" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.Build" Version="17.14.28" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+		<PackageReference Include="MudBlazor" Version="8.14.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 	
