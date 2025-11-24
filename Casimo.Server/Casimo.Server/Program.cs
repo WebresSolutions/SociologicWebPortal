@@ -80,6 +80,7 @@ public class Program
         _ = app.MapRazorPages();
         _ = app.MapControllers();
         _ = app.MapFallbackToFile("index.html");
+        app.UseOutputCache();
         app.AddFacilityEndpoints();
         app.AddFitForPurposeEndpoints();
         app.AddUserManagerEndpoints();

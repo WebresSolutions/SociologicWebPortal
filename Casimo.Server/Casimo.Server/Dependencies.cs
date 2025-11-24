@@ -37,15 +37,12 @@ public static class Dependencies
             ?? throw new Exception("Connection string 'DefaultConnection' not found.");
         _ = builder.Services.AddDbContext<CasimoDbContext>(options => options.UseSqlServer(casimoConnectionString, serverOptions =>
         {
-            _ = serverOptions.TranslateParameterizedCollectionsToConstants(); // Enable optimization for SQL WHERE IN clauses otherwise was not working correctly 
+            _ = serverOptions.UseParameterizedCollectionMode(ParameterTranslationMode.MultipleParameters); // Enable optimization for SQL WHERE IN clauses otherwise was not working correctly 
             _ = serverOptions.EnableRetryOnFailure(
                 maxRetryCount: 3,
                 maxRetryDelay: TimeSpan.FromSeconds(30),
                 errorNumbersToAdd: null);
         }));
-
-        Console.WriteLine($"Casimo Connection: {casimoConnectionString}");
-        Console.WriteLine($"Auth Connection: {authConnectionString}");
     }
 
     /// <summary>
@@ -154,11 +151,8 @@ public static class Dependencies
 
         // Add some policies
         _ = builder.Services.AddAuthorizationBuilder()
-            // Add some policies
             .AddPolicy(PolicyConstants.AdminOnly, policy => policy.RequireRole(RoleConstants.AdminUser))
-            // Add some policies
             .AddPolicy(PolicyConstants.FullUserOnly, policy => policy.RequireRole(RoleConstants.AdminUser, RoleConstants.FullUser))
-            // Add some policies
             .AddPolicy(PolicyConstants.TemporaryUserOnly, policy => policy.RequireRole(RoleConstants.TemporaryUser));
 
     }
@@ -170,19 +164,25 @@ public static class Dependencies
     /// <param name="builder">The web application builder to configure</param>
     public static void AddOtherServices(this WebApplicationBuilder builder)
     {
+        builder.Services.AddOutputCache(options =>
+        {
+            options.AddBasePolicy(builder =>
+                builder.Expire(TimeSpan.FromSeconds(30)));
+        });
         _ = builder.WebHost.UseStaticWebAssets();
-
+        // Add the custom services
+        _ = builder.Services.Configure<MagicLinkOptions>(builder.Configuration.GetSection("MagicLink"));
+        // Inject as singleton since the Smtp2GoApiClient is thread-safe and stateless, means we can reuse the same instance
         string smtp2Go = builder.Configuration.GetValue<string>("SMPT2GO")
             ?? throw new Exception("Could not find the smtp 2 go api key");
-
-        // Add the custom services
         _ = builder.Services.AddSingleton<IApiService, Smtp2GoApiService>(x => new Smtp2GoApiService(smtp2Go));
+        // Add as singleton since it does not maintain any state
+        _ = builder.Services.AddSingleton<IEmailSender, EmailSender>();
+        // These services are scoped to the request, since they might depend on DbContext instances
         _ = builder.Services.AddScoped<IFacilityService, FacilityService>();
         _ = builder.Services.AddScoped<IFitForPurposeService, FitForPurposeService>();
         _ = builder.Services.AddScoped<IUserManagerService, UserManagerService>();
-        _ = builder.Services.AddScoped<IEmailSender, EmailSender>();
         _ = builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
-        _ = builder.Services.Configure<MagicLinkOptions>(builder.Configuration.GetSection("MagicLink"));
 
         _ = builder.Services.AddControllersWithViews();
         _ = builder.Services.AddRazorPages();

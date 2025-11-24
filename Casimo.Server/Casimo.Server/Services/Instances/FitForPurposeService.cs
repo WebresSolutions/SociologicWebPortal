@@ -132,27 +132,28 @@ public class FitForPurposeService(CasimoDbContext _casimoDB, ILogger<FitForPurpo
                  (section, responseGroup) => new { Section = section, Responses = responseGroup })
              .SelectMany(
                  x => x.Responses.DefaultIfEmpty(),
-                 (x, sectionResponse) => new SectionDetailDto
+                 (section, sectionResponse) => new SectionDetailDto
                  {
-                     SectionId = x.Section.Id,
-                     SectionNumber = x.Section.SectionNumber,
-                     SectionTitle = x.Section.SectionTitle,
-                     IsGencomment = x.Section.GenComment == true,
-                     IsAssetComment = x.Section.AssetComment == true,
-                     CommentNumber = x.Section.CommentNumber,
-                     IsOtherComment = x.Section.GenComment == false && x.Section.AssetComment == false,
-                     SummaryRequired = x.Section.SummaryRequired ?? false,
+                     SectionId = section.Section.Id,
+                     SectionNumber = section.Section.SectionNumber,
+                     SectionTitle = section.Section.SectionTitle,
+                     IsGencomment = section.Section.GenComment == true,
+                     IsAssetComment = section.Section.AssetComment == true,
+                     CommentNumber = section.Section.CommentNumber,
+                     IsOtherComment = section.Section.GenComment == false && section.Section.AssetComment == false,
+                     SummaryRequired = section.Section.SummaryRequired ?? false,
                      // Handle null response for sections with no response
                      Summary = sectionResponse != null ? sectionResponse.Summary ?? "" : "",
                      FFPScore = sectionResponse != null ? sectionResponse.SectionScore1 : (decimal)0.0,
-                     Questions = x.Section.TblFfptemplateQuestions.Select(q => new QuestionResponseDetailDto
-                     {
-                         QuestionId = q.Id,
-                         Subsection = q.Subsection ?? string.Empty,
-                         QuestionTitle = q.QuestionTitle ?? string.Empty,
-                         QuestionText = q.QuestionText ?? string.Empty,
-                         HelpComments = q.HelpComments,
-                     }).ToList()
+                     Questions = section.Section.TblFfptemplateQuestions.Select(
+                         q => new QuestionResponseDetailDto
+                         {
+                             QuestionId = q.Id,
+                             Subsection = q.Subsection ?? string.Empty,
+                             QuestionTitle = q.QuestionTitle ?? string.Empty,
+                             QuestionText = q.QuestionText ?? string.Empty,
+                             HelpComments = q.HelpComments,
+                         }).ToList()
                  })
              .ToListAsync();
 

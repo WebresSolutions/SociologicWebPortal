@@ -7,6 +7,7 @@ using Casimo.Shared.Constants;
 using Casimo.Shared.Enums;
 using Casimo.Shared.ResponseModels;
 using Microsoft.EntityFrameworkCore;
+using Quartz.Util;
 
 namespace Casimo.Server.Services.Instances;
 
@@ -148,7 +149,8 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
 
             // Get the list of facilities' assessments from the assessment log
             FacilityDetailsDto facilityDetailsDto = new(facilityId: facility.FacilityId,
-                    facility.FacilitySite ?? "", facility.Address ?? "",
+                    facility.FacilitySite ?? "" + (facility.FacilityComponent.IsNullOrWhiteSpace() ? "" : $" - {facility.FacilityComponent}"),
+                    facility.Address ?? "",
                     postCode: facility.Postcode, suburb: facility.Settlement ?? "", owner: facility.Owner ?? "",
                     facility.Operator ?? "", status: facility.Status?.FacilityStatus ?? "",
                     coordinates, facility.Comments ?? "", facility.StatusId, facility.Lgaid ?? "");
@@ -248,12 +250,14 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
             query = query.Where(x => x.Lgaid == user.Lgaid);
         }
 
-        return await query
-        .Where(x => x.Lgaid != null && x.XLongitude != null && x.YLatitude != null)
-        .OrderByDescending(x => x.Lgaid)
-        .GroupBy(x => x.Lgaid)
-        .Select(x => new LGAidCounts(x.Key!, x.Count()))
-        .ToArrayAsync();
+        LGAidCounts[] result = await query
+            .Where(x => x.Lgaid != null && x.XLongitude != null && x.YLatitude != null)
+            .OrderByDescending(x => x.Lgaid)
+            .GroupBy(x => x.Lgaid)
+            .Select(x => new LGAidCounts(x.Key!, x.Count()))
+            .ToArrayAsync();
+
+        return result;
     }
 
     /// <summary>
@@ -262,13 +266,24 @@ public class FacilityService(ILogger<FacilityService> _logger, CasimoDbContext _
     /// <param name="lgAid">The LG Aid identifier used to locate associated facilities. Cannot be null or empty.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains an array of facility coordinates
     /// associated with the specified LG Aid. The array will be empty if no facilities are found.</returns>
-    public async Task<FacilityCoords[]> GetLgAidFacility(string lgAid) => await _casimoDbContext.TblFacilities
+    public async Task<FacilityCoords[]> GetLgAidFacility(string lgAid)
+    {
+        FacilityCoords[] facilityCoords = await _casimoDbContext.TblFacilities
             .Where(x => x.Lgaid == lgAid && x.XLongitude != null && x.YLatitude != null)
             .OrderBy(x => x.FacilitySite)
             .Select(x => new FacilityCoords(
                 x.FacilityId,
-                x.FacilitySite ?? "",
+                x.FacilitySite + (x.FacilityComponent.IsNullOrWhiteSpace() ? "" : $" - {x.FacilityComponent}"),
                 x.XLongitude!.Value,
                 x.YLatitude!.Value))
             .ToArrayAsync();
+
+        for (int i = 0; i < facilityCoords.Length; i++)
+        {
+            if (facilityCoords[i].Name.Length > 60)
+                facilityCoords[i] = facilityCoords[i] with { Name = facilityCoords[i].Name[..60] + "..." };
+        }
+
+        return facilityCoords;
+    }
 }
