@@ -10,18 +10,12 @@
 
 <div class="d-flex flex-column gap-4">
 	<Card IsLoading="isLoading">
-		<TitleContent>
-			<div class="d-flex justify-content-start mb-5">
-				<h3 class="text-center mb-4">Facility Details</h3>
-			</div>
-		</TitleContent>
 		<ChildContent>
 			@if (details is not null)
 			{
 				<EditForm Model="details.FacilityDetails" OnValidSubmit="SaveFacility">
 					<DataAnnotationsValidator />
 					<div class="facility-details-container">
-						<section class="d-flex flex-column gap-3">
 							<div class="inner-container d-flex flex-column gap-2">
 								<MudToggleGroup T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent>
 									<MudToggleItem Value="@(MapMode.Single)" Text="Single" />
@@ -55,7 +49,6 @@
 									}
 								</div>
 							</div>
-						</section>
 					</div>
 					<div class="text-end mt-3">
 						<MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled=isSaving StartIcon="@Icons.Material.Filled.Save">Save Details</MudButton>
@@ -69,13 +62,13 @@
 <style>
 	.facility-details-container {
 		display: grid;
-		grid-template-columns: 2fr;
+		grid-template-columns: 2fr 1fr;
 		gap: 1rem;
 	}
 
 	.facility-address {
-		display: grid;
-		grid-template-columns: 2fr 1fr;
+		display: flex;
+		flex-direction: column;
 		gap: 1rem;
 	}
 

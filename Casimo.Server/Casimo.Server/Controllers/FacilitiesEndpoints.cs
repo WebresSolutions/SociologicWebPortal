@@ -48,7 +48,8 @@ public static class FacilitiesEndpoints
 
                     return EndpointsHelper.ProcessResult(facilitiesResult, "An Error occured while loading facilities");
                 })
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .CacheOutput("Expire30");
 
         // Get a specific facility by its ID
         _ = facilitiesGroup.MapGet(
@@ -73,7 +74,8 @@ public static class FacilitiesEndpoints
 
                     return EndpointsHelper.ProcessResult(res, "An Error occured while loading facility details");
                 })
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .CacheOutput("Expire30");
 
         _ = facilitiesGroup.MapPost("",
         async (

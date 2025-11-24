@@ -72,8 +72,9 @@ builder.Services.AddMudServices(config =>
 builder.Services.AddBlazorGoogleMaps(builder.Configuration.GetValue<string>("GoogleMaps:MapsApiKey")
     ?? throw new Exception("Failed to load the google maps api key"));
 
-// Add the custom services 
-builder.Services.AddScoped<IApiService, ApiService>();
+// Inject as singleton.
+builder.Services.AddSingleton<IApiService, ApiService>();
+// The service holds stateful information about the current user session.
 builder.Services.AddSingleton<SessionStorage>();
 
 WebAssemblyHost host = builder.Build();

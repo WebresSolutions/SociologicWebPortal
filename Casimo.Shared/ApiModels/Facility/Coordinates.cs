@@ -7,7 +7,7 @@
 public class Coordinates
 {
     /// <summary>
-    /// Initializes a new instance of the Coordinates class
+    /// Initializes a new instance of the Coordinates class. Defaulting to Melbourne
     /// </summary>
     public Coordinates()
     {
