@@ -18,7 +18,7 @@
 							<MudText Typo="Typo.h6" Style=@($"color: {WebHelpers.AssessmentStatusToColour(assessment.Key)}")>@assessment.Key.GetDisplayName()</MudText>
 						</ToolBarContent>
 						<Columns>
-							<TemplateColumn Title="View">
+							<TemplateColumn Title="View" CellStyle="width:80px">
 								<CellTemplate>
 									<MudButton StartIcon="@Icons.Material.Filled.RemoveRedEye" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="@(() => ViewAssessment(context.Item.AssessmentLogId))">View</MudButton>
 								</CellTemplate>
@@ -30,7 +30,7 @@
 									</MudLink>
 								</CellTemplate>
 							</TemplateColumn>
-							<PropertyColumn Property="x => x.Use" Title="Assessed Use" />
+							<PropertyColumn Property="x => x.Use" Title="Assessed Use" CellStyle="width:275px" />
 							<PropertyColumn Property="x => x.LastEdited" Title="Last Edited" Format="@StringFormat.DateWithTime" />
 							<PropertyColumn Property="x => x.LastEditedBy" Title="Last Edit"/>
 						</Columns>
