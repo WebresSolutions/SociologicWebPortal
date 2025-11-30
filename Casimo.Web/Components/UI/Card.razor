@@ -28,12 +28,14 @@
     /// </summary>
     [Parameter]
     public required RenderFragment ChildContent { get; set; }
+
     /// <summary>
     /// Gets or sets a value indicating whether the card is in a loading state
     /// When true, displays a skeleton loader instead of content
     /// </summary>
     [Parameter]
     public bool IsLoading { get; set; } = false;
+
     /// <summary>
     /// Gets or sets the title displayed at the top of the card
     /// If empty, no title is shown
@@ -47,18 +49,22 @@
     [Parameter]
     public int Height { get; set; } = 300;
 
-	private string _heightString => Height > 0 ? $"{Height}px" : "300px";
+    private string _heightString => Height > 0 ? $"{Height}px" : "300px";
 
     /// <summary>
     /// Gets or sets the title content to be displayed within the card
     /// </summary>
     [Parameter]
     public RenderFragment? TitleContent { get; set; }
+
     /// <summary>
     /// Optionally pass a function to reload the card content
     /// </summary>
     [Parameter]
     public Func<Task>? Reload { get; set; }
+
+    [Parameter]
+    public int? PaddingOverride { get; set; }
 }
 <style>
     .card-wrapper {
@@ -74,6 +80,10 @@
     .card-container {
         max-width: 1000px;
         overflow: scroll;
+    }
+
+    .container{
+        padding: @(PaddingOverride.HasValue ? $"{PaddingOverride.Value}px" : "10px");
     }
 
     @@media (max-width: 1270px) {

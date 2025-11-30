@@ -12,7 +12,6 @@
     --padding: 10px;
 }
 
-
 html, body {
     color: var(--color-primary);
     background-color: var(--color-background) !important;
@@ -154,13 +153,8 @@ code {
         transform: translateY(-3px);
     }
 
-.mud-table {
-    box-shadow: none !important;
-}
-
 .container {
     background: var(--color-white);
-    padding: 15px;
     border-radius: var(--border-rad);
 }
 
@@ -169,6 +163,29 @@ code {
 }
 
 
+.border-rad {
+    border-radius: var(--border-rad) !important;
+}
+
+.inner-container {
+    border: solid 3px var(--color-grey);
+    background-color: var(--color-grey);
+    padding: 15px 15px 15px 15px;
+    transition: all 0.3s ease;
+    border-radius: var(--border-rad);
+    height: fit-content;
+}
+
+
+@media only screen and (max-width: 1024px) {
+    .container {
+        padding: 5px 5px 5px 5px !important;
+    }
+}
+
+.mud-table {
+    box-shadow: none !important;
+}
 .mud-button-filled.mud-button-filled-primary {
     border-radius: var(--border-rad);
     box-shadow: none;
@@ -223,24 +240,4 @@ code {
 .mud-input {
     background: white !important;
     border-radius: var(--border-rad) !important;
-}
-
-.border-rad {
-    border-radius: var(--border-rad) !important;
-}
-
-.inner-container {
-    border: solid 3px var(--color-grey);
-    background-color: var(--color-grey);
-    padding: 15px 15px 15px 15px;
-    transition: all 0.3s ease;
-    border-radius: var(--border-rad);
-    height: fit-content;
-}
-
-
-@media only screen and (max-width: 1024px){
-    .container {
-        padding: 10px 5px 5px 5px !important;
-    }
 }

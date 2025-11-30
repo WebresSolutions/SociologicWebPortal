@@ -4,7 +4,9 @@
 <div class="map-container">
 	@if (LGAFilter is null)
 	{
-		<MudSelect T="string" Dense="true" Value="selectedLGAid" Label="Select An LgAid To View The Map" ValueChanged="@((string x) => ValueChanged(x, false))" Class="px-2 mb-1" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium">
+		<MudSelect T="string" Dense="true" Value="selectedLGAid" Label="Select An LgAid To View The Map" 
+			ValueChanged="@((string x) => ValueChanged(x, false))" Class="px-2 mb-1" 
+			AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium">
 			@foreach (LGAidCounts lgAid in lgaids)
 			{
 				<MudSelectItem Value="@lgAid.LGAidName">@lgAid.LGAidName (@lgAid.count)</MudSelectItem>
@@ -15,8 +17,12 @@
 	{
 		<MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-2" />
 	}
-	<GoogleMap @ref="@map" Options="@mapOptions" CssClass="border-rad"></GoogleMap>
+	<GoogleMap @ref="@map" Options="@mapOptions" CssClass="border-rad" ></GoogleMap>
 </div>
 
-
-
+<style>
+	.gm-style-mtc>button{
+		height: 30px !important;
+        padding: 0 10px !important;
+	}
+</style>

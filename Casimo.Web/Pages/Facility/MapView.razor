@@ -9,81 +9,99 @@
 @using GoogleMapsComponents.Maps
 
 <div class="d-flex flex-column gap-4">
-	<Card IsLoading="isLoading">
-		<ChildContent>
-			@if (details is not null)
-			{
-				<EditForm Model="details.FacilityDetails" OnValidSubmit="SaveFacility">
-					<DataAnnotationsValidator />
-					<div class="facility-details-container">
-							<div class="inner-container d-flex flex-column gap-2">
-								<MudToggleGroup T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent>
-									<MudToggleItem Value="@(MapMode.Single)" Text="Single" />
-									<MudToggleItem Value="@(MapMode.All)" Text="All Facilities" />
-								</MudToggleGroup>
-								<FacilitiesMap LGAFilter="@details.FacilityDetails.LGA" DefaultDetails="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" />
-							</div>
-							<div class="facility-address">
-								<div class="inner-container">
-									<h5>Address</h5>
-									<MudTextField @bind-Value="details.FacilityDetails.StreetAddress" Label="Street Address" 
-												  Variant="Variant.Outlined"></MudTextField>
-									<ValidationMessage For="@(() => details.FacilityDetails.StreetAddress)" />
-									<MudTextField @bind-Value="details.FacilityDetails.Suburb" Label="Suburb/Town"
-												  Variant="Variant.Outlined"></MudTextField>
-									<ValidationMessage For="@(() => details.FacilityDetails.Suburb)" />
-									<MudTextField @bind-Value="details.FacilityDetails.PostCode" Label="PostCode"
-												  Variant="Variant.Outlined"></MudTextField>
-									<ValidationMessage For="@(() => details.FacilityDetails.PostCode)" />
-								</div>
-								<div class="inner-container">
-									@if (details.FacilityDetails.Coordinates is not null)
-									{
-										<h5>Coordinates</h5>
-										<MudTextField @bind-Value="details.FacilityDetails.Coordinates.Latitude"
-													  Label="Y (Latitude)" Variant="Variant.Outlined"></MudTextField>
-										<ValidationMessage For="@(() => details.FacilityDetails.Coordinates.Latitude)" />
-										<MudTextField @bind-Value="details.FacilityDetails.Coordinates.Longitude"
-													  Label="X (Longitude)" Variant="Variant.Outlined"></MudTextField>
-										<ValidationMessage For="@(() => details.FacilityDetails.Coordinates.Longitude)" />
-									}
-								</div>
-							</div>
-					</div>
-					<div class="text-end mt-3">
-						<MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled=isSaving StartIcon="@Icons.Material.Filled.Save">Save Details</MudButton>
-					</div>
-				</EditForm>
-			}
-		</ChildContent>
-	</Card>
+    <Card IsLoading="isLoading" PaddingOverride="5">
+        <ChildContent>
+            @if (details is not null)
+            {
+                <EditForm Model="details.FacilityDetails" OnValidSubmit="SaveFacility">
+                    <DataAnnotationsValidator />
+                    <div class=@(MapOnly ? "facility-details-container full" : "facility-details-container")>
+                        <div class="inner-container d-flex flex-column gap-2">
+                            <MudToggleGroup Style="font: 10px" T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent>
+                                <MudToggleItem Value="@(MapMode.Single)" Text="Single" />
+                                <MudToggleItem Value="@(MapMode.All)" Text="All Facilities" />
+                            </MudToggleGroup>
+                            <FacilitiesMap LGAFilter="@details.FacilityDetails.LGA" DefaultDetails="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" />
+                        </div>
+                        @if (!MapOnly)
+                        {
+                            <div class="facility-address">
+                                <div class="inner-container">
+                                    <h5>Address</h5>
+                                    <MudTextField @bind-Value="details.FacilityDetails.StreetAddress" Label="Street Address"
+                                                  Variant="Variant.Outlined"></MudTextField>
+                                    <ValidationMessage For="@(() => details.FacilityDetails.StreetAddress)" />
+                                    <MudTextField @bind-Value="details.FacilityDetails.Suburb" Label="Suburb/Town"
+                                                  Variant="Variant.Outlined"></MudTextField>
+                                    <ValidationMessage For="@(() => details.FacilityDetails.Suburb)" />
+                                    <MudTextField @bind-Value="details.FacilityDetails.PostCode" Label="PostCode"
+                                                  Variant="Variant.Outlined"></MudTextField>
+                                    <ValidationMessage For="@(() => details.FacilityDetails.PostCode)" />
+                                </div>
+                                <div class="inner-container">
+                                    @if (details.FacilityDetails.Coordinates is not null)
+                                    {
+                                        <h5>Coordinates</h5>
+                                        <MudTextField @bind-Value="details.FacilityDetails.Coordinates.Latitude"
+                                                      Label="Y (Latitude)" Variant="Variant.Outlined"></MudTextField>
+                                        <ValidationMessage For="@(() => details.FacilityDetails.Coordinates.Latitude)" />
+                                        <MudTextField @bind-Value="details.FacilityDetails.Coordinates.Longitude"
+                                                      Label="X (Longitude)" Variant="Variant.Outlined"></MudTextField>
+                                        <ValidationMessage For="@(() => details.FacilityDetails.Coordinates.Longitude)" />
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    @if (!MapOnly)
+                    {
+                        <div class="text-end mt-3">
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit" Disabled=isSaving StartIcon="@Icons.Material.Filled.Save">Save Details</MudButton>
+                        </div>
+                    }
+                </EditForm>
+            }
+        </ChildContent>
+    </Card>
 </div>
 
 <style>
-	.facility-details-container {
-		display: grid;
-		grid-template-columns: 2fr 1fr;
-		gap: 1rem;
-	}
+    .facility-details-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+    }
 
-	.facility-address {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
+        .facility-details-container.full {
+            grid-template-columns: 1fr;
+        }
 
-	.inner-container {
-		border: solid 3px var(--color-grey);
-		background-color: var(--color-grey);
-		padding: 15px 15px 15px 15px;
-		transition: all 0.3s ease;
-		border-radius: var(--border-rad);
-		height: fit-content;
-	}
+    .mud-toggle-item > .mud-button-label{
+        font-size: 12px;
+    }
 
-	@@media(max-width: 1000px) {
-		.facility-details-container {
-			grid-template-columns: 1fr;
-		}
-	}
+    .mud-toggle-item{
+        padding: 1px !important; 
+    }
+
+    .facility-address {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .inner-container {
+        border: solid 3px var(--color-grey);
+        background-color: var(--color-grey);
+        padding: @(MapOnly ? "10px" : "15px");
+        transition: all 0.3s ease;
+        border-radius: var(--border-rad);
+        height: fit-content;
+    }
+
+    @@media(max-width: 1000px) {
+        .facility-details-container {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>

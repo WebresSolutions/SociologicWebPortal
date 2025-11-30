@@ -16,6 +16,10 @@ public partial class MapView
     [Parameter]
     public int FacilityId { get; set; }
 
+    [SupplyParameterFromQuery]
+    [Parameter]
+    public bool MapOnly { get; set; }
+
     #region Private Fields
 
     /// <summary>
@@ -75,7 +79,7 @@ public partial class MapView
         if (result is { IsSuccess: true, Value: not null })
         {
             details = result.Value;
-            if(details.FacilityDetails.Coordinates is null || details.FacilityDetails.Coordinates.Latitude is null || details.FacilityDetails.Coordinates.Longitude is null)
+            if (details.FacilityDetails.Coordinates is null || details.FacilityDetails.Coordinates.Latitude is null || details.FacilityDetails.Coordinates.Longitude is null)
                 details!.FacilityDetails.Coordinates = new(); // Ensure Coordinates is not null
         }
         else
