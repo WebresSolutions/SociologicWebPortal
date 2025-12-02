@@ -1,0 +1,48 @@
+﻿@using Casimo.Shared.ApiModels.Facility
+@using GoogleMapsComponents
+
+<div class="map-container">
+    @if (LGAFilter is null)
+    {
+        <MudSelect T="string" Dense="true" Value="selectedLGAid" Label="Select An LgAid To View The Map"
+                   ValueChanged="@((string x) => ValueChanged(x, false))" Class="px-2 mb-1"
+                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium">
+            @foreach (LGAidCounts lgAid in lgaids)
+            {
+                <MudSelectItem Value="@lgAid.LGAidName">@lgAid.LGAidName (@lgAid.count)</MudSelectItem>
+            }
+        </MudSelect>
+    }
+    @if (isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-2" />
+    }
+    <GoogleMap @ref="@map" Options="@mapOptions" CssClass=@(IsMinimizedView ? "border-rad min-map" : "border-rad") ></GoogleMap>
+</div>
+
+<style>
+    .map-container > .min-map > div > div.gm-style > div:nth-child(4) > div > .gm-style-mtc > button {
+        height: 30px !important;
+        padding: 0 10px !important;
+        font-size: 16px !important;
+    }
+
+    .map-container > .min-map > div > div.gm-style > div:nth-child(4) > div > .gm-style-mtc > ul > li {
+        height: 30px !important;
+        padding: 0 10px !important;
+        font-size: 16px !important;
+    }
+
+    .map-container > .min-map > div > div.gm-style > div:nth-child(8) > button {
+        display: none;
+    }
+
+    gmp-internal-camera-control {
+        display: none;
+    }
+    
+    .min-map {
+        height: 250px !important;
+    }
+
+</style>

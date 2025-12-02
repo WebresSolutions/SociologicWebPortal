@@ -15,7 +15,7 @@ namespace Casimo.Web.Components.Facilities;
 /// If supplied with a DefaultDetails parameter, shows only that facility in Single mode.
 /// Otherwise shows all facilities in the selected LGA in All mode.
 /// </summary>
-public partial class FacilitiesMap : IDisposable
+public partial class CustomMap : IDisposable
 {
     /// <summary>
     /// Optional LGA filter to pre-select on load
@@ -46,6 +46,12 @@ public partial class FacilitiesMap : IDisposable
     /// </summary>
     [Parameter]
     public EventCallback<int> OnMarkerClick { get; set; }
+
+    /// <summary>
+    /// The map is used in 2 places - full view and minimized view.
+    /// </summary>
+    [Parameter]
+    public bool IsMinimizedView { get; set; }
 
     #region Private Fields
     private bool isLoading = false;
@@ -236,7 +242,8 @@ public partial class FacilitiesMap : IDisposable
                     Title = facility.Name,
                     Content = content,
                     GmpClickable = true,
-                    GmpDraggable = isDefaultFacility
+                    //GmpDraggable = isDefaultFacility && !IsMinimizedView
+                    GmpDraggable = false
                 });
 
                 return (MarkerTask: markerTask, Facility: facility, Position: latLng);

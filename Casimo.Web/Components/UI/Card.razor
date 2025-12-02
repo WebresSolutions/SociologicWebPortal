@@ -44,7 +44,7 @@
     public string Title { get; set; } = string.Empty;
 
     /// <summary>
-    /// The height of the card in pixels. Default is 300.  
+    /// The height of the card in pixels. Default is 300.
     /// </summary>
     [Parameter]
     public int Height { get; set; } = 300;
@@ -65,6 +65,9 @@
 
     [Parameter]
     public int? PaddingOverride { get; set; }
+
+    [Parameter]
+    public bool FullWidth { get; set; } = false;
 }
 <style>
     .card-wrapper {
@@ -82,14 +85,30 @@
         overflow: scroll;
     }
 
-    .container{
+    .container {
         padding: @(PaddingOverride.HasValue ? $"{PaddingOverride.Value}px" : "10px");
     }
 
     @@media (max-width: 1270px) {
         .card-container {
-            max-width: 800px;
-            overflow: scroll;
+            max-width: @(FullWidth ? "100%" : "800px");
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .container {
+            max-width: @(FullWidth ? "100%" : "800px");
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .container {
+            max-width: @(FullWidth ? "100%" : "600px");
+        }
+    }
+    @@media (max-width: 576px) {
+        .container {
+            max-width: @(FullWidth ? "100%" : "500px");
         }
     }
 </style>
