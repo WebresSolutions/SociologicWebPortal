@@ -85,16 +85,26 @@ public static class WebHelpers
         return result ?? false;
     }
 
-    public static string FormatCoordinate(string name, bool secondary = false)
+    public static string CreateMapCoordinate(string name, bool secondary = false)
     {
         string color = secondary ? "var(--color-secondary)" : "var(--color-primary)";
-
-        return $"<div style=\"display: flex; align-items: center; background: {color}; color: white; padding: 3px 9px; border-radius: 25px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.4); cursor: pointer; border: 1px solid white; white-space: nowrap; transform: translateY(-50%);\">" +
+        return $"<div style=\"position: relative; display: inline-flex; align-items: center; background: {color}; color: white; padding: 3px 9px; border-radius: 25px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.4); cursor: pointer; border: 1px solid white; white-space: nowrap; transform: translateY(-50%); overflow: visible;\">" +
                      "<svg width=\"12\" height=\"12\" style=\"margin-right: 4px;\" viewBox=\"0 0 24 24\" fill=\"currentColor\">" +
                      "<path d=\"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z\"/>" +
                      "</svg>" +
                      $"<span>{name}</span>" +
+                     $"<svg style=\"position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);\" width=\"20\" height=\"10\" viewBox=\"0 0 20 10\">" +
+                     $"<path d=\"M1 1 L10 10 L19 1\" fill=\"{color}\" stroke=\"white\" stroke-width=\"1\" stroke-linejoin=\"miter\"/>" +
+                     $"<rect x=\"0\" y=\"0\" width=\"20\" height=\"2\" fill=\"{color}\"/>" +
+                     "</svg>" +
                      "</div>";
     }
 }
+//    public static string CreateMapCoordinate(string template, string name, bool secondary = false)
+//    {
+//        string color = secondary ? "--color-secondary" : "--color-primary";
+//        template = template.Replace("{COLOR}", color).Replace("{name}", name);
+//        return template;
+//    }
+//}
 

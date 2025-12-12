@@ -21,7 +21,7 @@
                                 <MudToggleItem Value="@(MapMode.Single)" Text="Single" />
                                 <MudToggleItem Value="@(MapMode.All)" Text="All Facilities" />
                             </MudToggleGroup>
-                            <CustomMap LGAFilter="@details.FacilityDetails.LGA" DefaultDetails="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" IsMinimizedView="MapOnly" />
+                            <CustomMap LGAFilter="@details.FacilityDetails.LGA" MainDetFac="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" IsMinimizedView="MapOnly" />
                         </div>
                         @if (!MapOnly)
                         {

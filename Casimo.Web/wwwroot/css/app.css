@@ -10,6 +10,8 @@
     --color-yellow: #a16207;
     --border-rad: 15px;
     --padding: 10px;
+    --mud-ripple-color: var(--color-primary) !important;
+    --mud-palette-primary: var(--color-primary) !important;
 }
 
 html, body {
@@ -240,4 +242,12 @@ code {
 .mud-input {
     background: white !important;
     border-radius: var(--border-rad) !important;
+}
+
+.mud-toggle-group-outlined.mud-toggle-group-primary {
+    border-color: var(--color-primary) !important;
+}
+.mud-button-outlined.mud-button-outlined-primary {
+    color: var(--color-primary) !important; 
+    border: 1px solid rgba(var(--color-primary), var(--color-primary)) !important;
 }

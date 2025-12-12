@@ -27,7 +27,7 @@ public partial class CustomMap : IDisposable
     /// Optional default coordinates to center the map on load
     /// </summary>
     [Parameter]
-    public FacilityDetailsDto? DefaultDetails { get; set; }
+    public FacilityDetailsDto? MainDetFac { get; set; }
 
     /// <summary>
     /// The show mode for the map. All or Single
@@ -48,7 +48,7 @@ public partial class CustomMap : IDisposable
     public EventCallback<int> OnMarkerClick { get; set; }
 
     /// <summary>
-    /// The map is used in 2 places - full view and minimized view.
+    /// This is used to indicate if the map is in the minimized view mode.
     /// </summary>
     [Parameter]
     public bool IsMinimizedView { get; set; }
@@ -120,20 +120,26 @@ public partial class CustomMap : IDisposable
     {
         // Set initial center - use DefaultDetails coordinates if available, otherwise use default
         LatLngLiteral initialCenter = new(-37.8162, 144.9640);
-        if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
+        if (MainDetFac is not null && MainDetFac.Coordinates is not null)
         {
             initialCenter = new LatLngLiteral(
-                DefaultDetails.Coordinates.Latitude ?? initialCenter.Lat,
-                DefaultDetails.Coordinates.Longitude ?? initialCenter.Lng
+                MainDetFac.Coordinates.Latitude ?? initialCenter.Lat,
+                MainDetFac.Coordinates.Longitude ?? initialCenter.Lng
             );
         }
 
+        string mapId = Guid.NewGuid().ToString();
         mapOptions = new()
         {
             Zoom = 13,
             Center = initialCenter,
-            MapTypeId = MapTypeId.Roadmap,
-            MapId = Guid.NewGuid().ToString()
+            MapTypeId = MapTypeId.Satellite,
+            MapId = Guid.NewGuid().ToString(),
+            PanControl = false,
+            CameraControl = false,
+            FullscreenControl = false,
+            ClickableIcons = false,
+            Recycle = true
         };
         // Only reload LGAids if not already loaded
         if (lgaids.Length == 0)
@@ -163,8 +169,8 @@ public partial class CustomMap : IDisposable
     protected override async Task OnParametersSetAsync()
     {
 
-        if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
-            mapOptions!.Center = new LatLngLiteral(DefaultDetails.Coordinates.Latitude ?? 0, DefaultDetails.Coordinates.Longitude ?? 0);
+        if (MainDetFac is not null && MainDetFac.Coordinates is not null)
+            mapOptions!.Center = new LatLngLiteral(MainDetFac.Coordinates.Latitude ?? 0, MainDetFac.Coordinates.Longitude ?? 0);
 
         if ((previousShowMode != ShowMode || !markersLoaded) && !string.IsNullOrEmpty(selectedLGAid))
             await ValueChanged(selectedLGAid, true);
@@ -189,8 +195,8 @@ public partial class CustomMap : IDisposable
 
         await ClearMarkers();
 
-        if (ShowMode is MapMode.Single && DefaultDetails is not null)
-            facilities = [.. facilities.Where(x => x.FacilityID == DefaultDetails.FacilityId)];
+        if (ShowMode is MapMode.Single && MainDetFac is not null)
+            facilities = [.. facilities.Where(x => x.FacilityID == MainDetFac.FacilityId)];
 
         await LoadMapMarkersClustered(preserveZoom);
     }
@@ -228,29 +234,26 @@ public partial class CustomMap : IDisposable
 
             bounds = await LatLngBounds.CreateAsync(map.JsRuntime);
 
-            // Create all marker tasks in parallel using LINQ
             List<(Task<AdvancedMarkerElement> MarkerTask, FacilityCoords Facility, LatLngLiteral Position)> markerData = [.. facilities.Select(facility =>
             {
                 double lat = facility.latitude;
                 LatLngLiteral latLng = new(lat, facility.longitude);
-                bool isDefaultFacility = facility.FacilityID == DefaultDetails?.FacilityId;
-                string content = WebHelpers.FormatCoordinate(facility.Name, isDefaultFacility);
-
+                bool isDefaultFacility = facility.FacilityID == MainDetFac?.FacilityId;
+                string content = WebHelpers.CreateMapCoordinate(facility.Name, isDefaultFacility);
                 Task<AdvancedMarkerElement> markerTask = AdvancedMarkerElement.CreateAsync(map.JsRuntime, new AdvancedMarkerElementOptions()
                 {
                     Position = latLng,
                     Title = facility.Name,
                     Content = content,
-                    GmpClickable = true,
-                    //GmpDraggable = isDefaultFacility && !IsMinimizedView
-                    GmpDraggable = false
+                    GmpClickable = false,
+                    GmpDraggable = isDefaultFacility && !IsMinimizedView
                 });
 
                 return (MarkerTask: markerTask, Facility: facility, Position: latLng);
             })];
 
-            if (markers.Any(x => x.Key.FacilityID == DefaultDetails?.FacilityId))
-                markerData = [.. markerData.Where(x => x.Facility.FacilityID != DefaultDetails?.FacilityId)];
+            if (markers.Any(x => x.Key.FacilityID == MainDetFac?.FacilityId))
+                markerData = [.. markerData.Where(x => x.Facility.FacilityID != MainDetFac?.FacilityId)];
 
             // Await all markers to be created
             AdvancedMarkerElement[] completedMarkers = await Task.WhenAll(markerData.Select(m => m.MarkerTask));
@@ -281,10 +284,13 @@ public partial class CustomMap : IDisposable
 
             foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> kvp in markers)
             {
-                listenerTasks.Add(kvp.Value.AddListener("click", async () => await OnClickListener(kvp.Key.FacilityID)));
+                if (!IsMinimizedView)
+                {
+                    listenerTasks.Add(kvp.Value.AddListener("click", async () => await OnClickListener(kvp.Key.FacilityID)));
+                }
 
                 // Only add dragend listener for the default facility
-                if (kvp.Key.FacilityID == DefaultDetails?.FacilityId)
+                if (kvp.Key.FacilityID == MainDetFac?.FacilityId)
                     listenerTasks.Add(kvp.Value.AddListener<MouseEvent>("dragend", async (e) =>
                     {
                         await HandleDragEnd(e, kvp);
@@ -296,10 +302,10 @@ public partial class CustomMap : IDisposable
             // Center the map appropriately based on the context
             if (!preserveZoom)
             {
-                if (DefaultDetails is not null && DefaultDetails.Coordinates is not null)
+                if (MainDetFac is not null && MainDetFac.Coordinates is not null)
                 {
                     // Find the default facility marker position from the loaded markers
-                    KeyValuePair<FacilityCoords, AdvancedMarkerElement> defaultMarker = markers.FirstOrDefault(m => m.Key.FacilityID == DefaultDetails.FacilityId);
+                    KeyValuePair<FacilityCoords, AdvancedMarkerElement> defaultMarker = markers.FirstOrDefault(m => m.Key.FacilityID == MainDetFac.FacilityId);
 
                     if (defaultMarker.Value != null)
                     {
@@ -315,8 +321,8 @@ public partial class CustomMap : IDisposable
                     {
                         // Fallback to DefaultDetails coordinates if marker not found
                         LatLngLiteral defaultPosition = new(
-                            DefaultDetails.Coordinates.Latitude ?? 0,
-                            DefaultDetails.Coordinates.Longitude ?? 0
+                            MainDetFac.Coordinates.Latitude ?? 0,
+                            MainDetFac.Coordinates.Longitude ?? 0
                         );
                         await map.InteropObject.PanTo(defaultPosition);
                         await map.InteropObject.SetZoom(15);
@@ -365,13 +371,13 @@ public partial class CustomMap : IDisposable
             foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> marker in markers)
             {
                 // Keep the default facility marker if needed
-                if (marker.Key.FacilityID == DefaultDetails?.FacilityId)
+                if (marker.Key.FacilityID == MainDetFac?.FacilityId)
                     continue;
 
                 marker.Value.Dispose();
             }
-            if (markers.Any(x => x.Key.FacilityID == DefaultDetails?.FacilityId))
-                markers = markers.Where(x => x.Key.FacilityID != DefaultDetails?.FacilityId).ToDictionary(x => x.Key, x => x.Value);
+            if (markers.Any(x => x.Key.FacilityID == MainDetFac?.FacilityId))
+                markers = markers.Where(x => x.Key.FacilityID != MainDetFac?.FacilityId).ToDictionary(x => x.Key, x => x.Value);
         }
 
         markersLoaded = false;

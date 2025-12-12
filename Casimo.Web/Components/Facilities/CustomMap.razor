@@ -1,5 +1,6 @@
 ﻿@using Casimo.Shared.ApiModels.Facility
 @using GoogleMapsComponents
+@inject HttpClient HttpClient
 
 <div class="map-container">
     @if (LGAFilter is null)
@@ -33,13 +34,13 @@
         font-size: 16px !important;
     }
 
-    .map-container > .min-map > div > div.gm-style > div:nth-child(8) > button {
+/*     .map-container > .min-map > div > div.gm-style > div:nth-child(8) > button {
         display: none;
     }
 
     gmp-internal-camera-control {
         display: none;
-    }
+    } */
     
     .min-map {
         height: 250px !important;
