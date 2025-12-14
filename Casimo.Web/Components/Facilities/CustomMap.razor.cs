@@ -146,7 +146,8 @@ public partial class CustomMap : IDisposable
             FullscreenControl = false,
             ClickableIcons = false,
             Recycle = true,
-            ZoomControl = true
+            ZoomControl = true,
+            ControlSize = 24
         };
         // Only reload LGAids if not already loaded
         if (lgaids.Length == 0)
