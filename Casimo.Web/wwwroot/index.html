@@ -15,6 +15,20 @@
 </head>
 <body>
     <div id="app">
+        <div class="position-relative vh-100">
+            <div class="position-absolute top-50 start-50 translate-middle text-center">
+                <div class="loading">
+                    <img src="images/logo.png" style="width: 75px"/>
+                    <div class="text">Casimo Portal</div>
+                    <div class="progress mt-2" style="height: 2em; width: 125px">
+                        <div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated"
+                             style="width: 0; background-color: var(--color-primary);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     <div id="blazor-error-ui">
         An unhandled error has occurred.
@@ -38,7 +52,6 @@
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
     <script src="js/customMapInterop.js"></script>
 
-    <!-- NEW SCRIPT BLOCK ADDED HERE -->
     <script>
         // Function to add a unique timestamp to CSS links to force cache bust
         function versionCssFiles() {
@@ -53,15 +66,9 @@
             if (componentStyles) {
                 componentStyles.href = componentStyles.href + '?v=' + version;
             }
-
-            // You can add logic for other custom CSS files here as well
-            // e.g., Bootstrap link if you were hosting it locally and needed versioning
         }
 
         function StartBlazor() {
-            // ... (Your existing Blazor environment setup code) ...
-
-            // Call the versioning function before Blazor starts loading resources
             versionCssFiles();
 
             let loadedCount = 0;
@@ -87,11 +94,7 @@
                         if (type === "dotnetjs")
                             return defaultUri;
 
-                        // As "fetchResources" is a promise we don't block
                         const fetchResources = fetch(defaultUri, {
-                            // Note: Your existing fetch already uses 'no-cache' for boot resources,
-                            // which is great for the main app files but we needed to explicitly
-                            // manage the <link> tags in the HTML body separately.
                             cache: 'no-cache',
                             integrity: integrity
                         });
@@ -113,6 +116,7 @@
                     }
             });
         }
+
         // Invoke the pipeline
         StartBlazor();
     </script>

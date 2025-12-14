@@ -145,7 +145,8 @@ public partial class CustomMap : IDisposable
             CameraControl = false,
             FullscreenControl = false,
             ClickableIcons = false,
-            Recycle = true
+            Recycle = true,
+            ZoomControl = true
         };
         // Only reload LGAids if not already loaded
         if (lgaids.Length == 0)
