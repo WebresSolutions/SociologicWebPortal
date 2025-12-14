@@ -26,7 +26,7 @@ public static class WebHelpers
     /// <returns>A MudBlazor Color value appropriate for the specified role</returns>
     public static Color ColourHelper(string roleName) => roleName switch
     {
-        RoleConstants.AdminUser => Color.Primary,
+        RoleConstants.AdminUser => Color.Success,
         RoleConstants.FullUser => Color.Secondary,
         RoleConstants.TemporaryUser => Color.Info,
         _ => Color.Secondary

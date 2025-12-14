@@ -6,33 +6,20 @@
     <title>Casimo</title>
     <base href="/" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/app.css" id="app-css" />
     <link rel="icon" type="image/png" href="/images/logo.png" />
-    <link href="Casimo.Web.styles.css" rel="stylesheet" />
+    <link href="Casimo.Web.styles.css" rel="stylesheet" id="component-styles" />
+
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
 </head>
 <body>
     <div id="app">
-        <div class="position-relative vh-100">
-            <div class="position-absolute top-50 start-50 translate-middle text-center">
-                <div class="loading">
-                    <img src="images/logo.png" style="width:75px"/>
-                    <div class="text">Casimo Portal</div>
-                    <div class="progress mt-2" style="height: 2em; width: 110px">
-                        <div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated"
-                             style="width: 0; background-color: var(--color-primary);">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
     <div id="blazor-error-ui">
         An unhandled error has occurred.
         <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        <span class="dismiss">𝗫</span>
     </div>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     <script src="js/BlazorEnvironment.js"></script>
@@ -50,8 +37,33 @@
     <script src="_content/BlazorGoogleMaps/js/objectManager.js"></script>
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
     <script src="js/customMapInterop.js"></script>
+
+    <!-- NEW SCRIPT BLOCK ADDED HERE -->
     <script>
+        // Function to add a unique timestamp to CSS links to force cache bust
+        function versionCssFiles() {
+            const version = new Date().getTime(); // Unique timestamp
+
+            const appCss = document.getElementById('app-css');
+            if (appCss) {
+                appCss.href = appCss.href + '?v=' + version;
+            }
+
+            const componentStyles = document.getElementById('component-styles');
+            if (componentStyles) {
+                componentStyles.href = componentStyles.href + '?v=' + version;
+            }
+
+            // You can add logic for other custom CSS files here as well
+            // e.g., Bootstrap link if you were hosting it locally and needed versioning
+        }
+
         function StartBlazor() {
+            // ... (Your existing Blazor environment setup code) ...
+
+            // Call the versioning function before Blazor starts loading resources
+            versionCssFiles();
+
             let loadedCount = 0;
             let allRessources = 0;
             let env = "";
@@ -77,6 +89,9 @@
 
                         // As "fetchResources" is a promise we don't block
                         const fetchResources = fetch(defaultUri, {
+                            // Note: Your existing fetch already uses 'no-cache' for boot resources,
+                            // which is great for the main app files but we needed to explicitly
+                            // manage the <link> tags in the HTML body separately.
                             cache: 'no-cache',
                             integrity: integrity
                         });

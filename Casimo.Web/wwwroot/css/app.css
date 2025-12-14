@@ -12,6 +12,7 @@
     --padding: 10px;
     --mud-ripple-color: var(--color-primary) !important;
     --mud-palette-primary: var(--color-primary) !important;
+    --mud-palette-info: var(--color-primary) !important;
     --mud-default-borderradius: var(--border-rad) !important;
 }
 
