@@ -17,11 +17,11 @@
                     <DataAnnotationsValidator />
                     <div class=@(MapOnly ? "facility-details-container full" : "facility-details-container")>
                         <div class="inner-container d-flex flex-column gap-2">
-                            <MudToggleGroup Style="font: 10px" T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent>
+                            <MudToggleGroup Style="font: 10px" T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent Outlined="true" >
                                 <MudToggleItem Value="@(MapMode.Single)" Text="Single" />
                                 <MudToggleItem Value="@(MapMode.All)" Text="All Facilities" />
                             </MudToggleGroup>
-                            <CustomMap LGAFilter="@details.FacilityDetails.LGA" MainDetFac="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" IsMinimizedView="MapOnly" />
+                            <CustomMap LGAFilter="@details.FacilityDetails.LGA" MainDetFac="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" IsMinimizedView="MapOnly" AllowMarkerClick="false"/>
                         </div>
                         @if (!MapOnly)
                         {

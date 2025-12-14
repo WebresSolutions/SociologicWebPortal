@@ -53,6 +53,12 @@ public partial class CustomMap : IDisposable
     [Parameter]
     public bool IsMinimizedView { get; set; }
 
+    /// <summary>
+    /// If the markers should be clickable to trigger OnMarkerClick
+    /// </summary>
+    [Parameter]
+    public bool AllowMarkerClick { get; set; } = false;
+
     #region Private Fields
     private bool isLoading = false;
 
@@ -284,7 +290,7 @@ public partial class CustomMap : IDisposable
 
             foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> kvp in markers)
             {
-                if (!IsMinimizedView)
+                if (AllowMarkerClick)
                 {
                     listenerTasks.Add(kvp.Value.AddListener("click", async () => await OnClickListener(kvp.Key.FacilityID)));
                 }
@@ -444,6 +450,7 @@ public partial class CustomMap : IDisposable
     {
         foreach (KeyValuePair<FacilityCoords, AdvancedMarkerElement> marker in markers)
             marker.Value.Dispose();
+
 
         map?.Dispose();
 
