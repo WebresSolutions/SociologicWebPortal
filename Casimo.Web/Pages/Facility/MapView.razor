@@ -8,7 +8,7 @@
 @using GoogleMapsComponents
 @using GoogleMapsComponents.Maps
 
-<div class=@(MapOnly ? "" : "mt-4")>
+<div class=@(MapOnly ? "" : "mt-4") style="scrollbar-width: none">
     <Card IsLoading="isLoading" PaddingOverride=@(MapOnly ? 3 : 10) FullWidth="MapOnly">
         <ChildContent>
             @if (details is not null)
@@ -16,13 +16,7 @@
                 <EditForm Model="details.FacilityDetails" OnValidSubmit="SaveFacility">
                     <DataAnnotationsValidator />
                     <div class=@(MapOnly ? "facility-details-container full" : "facility-details-container")>
-                        <div class="inner-container d-flex flex-column gap-2">
-                            <MudToggleGroup Style="font: 10px" T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent Outlined="true" >
-                                <MudToggleItem Value="@(MapMode.Single)" Text="Single" />
-                                <MudToggleItem Value="@(MapMode.All)" Text="All Facilities" />
-                            </MudToggleGroup>
-                            <CustomMap LGAFilter="@details.FacilityDetails.LGA" MainDetFac="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" IsMinimizedView="MapOnly" AllowMarkerClick="false"/>
-                        </div>
+                        <CustomMap LGAFilter="@details.FacilityDetails.LGA" MainDetFac="@details.FacilityDetails" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" IsMinimizedView="MapOnly" AllowMarkerClick="false" />
                         @if (!MapOnly)
                         {
                             <div class="facility-address">
@@ -76,12 +70,12 @@
             grid-template-columns: 1fr;
         }
 
-    .mud-toggle-item > .mud-button-label{
+    .mud-toggle-item > .mud-button-label {
         font-size: 11px;
     }
 
-    .mud-toggle-item{
-        padding: 1px !important; 
+    .mud-toggle-item {
+        padding: 1px !important;
     }
 
     .facility-address {

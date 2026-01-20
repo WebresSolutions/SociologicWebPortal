@@ -1,24 +1,33 @@
 ﻿@using Casimo.Shared.ApiModels.Facility
 @using GoogleMapsComponents
 @inject HttpClient HttpClient
-
-<div class="map-container">
-    @if (LGAFilter is null)
+@inherits BaseDataComponent
+<div class="inner-container d-flex flex-column gap-2">
+    @if (!HideModeToggle)
     {
-        <MudSelect T="string" Dense="true" Value="selectedLGAid" Label="Select An LgAid To View The Map"
-                   ValueChanged="@((string x) => ValueChanged(x, false))" Class="px-2 mb-1"
-                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium">
-            @foreach (LGAidCounts lgAid in lgaids)
-            {
-                <MudSelectItem Value="@lgAid.LGAidName">@lgAid.LGAidName (@lgAid.count)</MudSelectItem>
-            }
-        </MudSelect>
+        <MudToggleGroup Style="font: 10px" T="MapMode" SelectionMode="SelectionMode.SingleSelection" Value="MapMode" ValueChanged="@OnModeToggleChanged" Color="Color.Primary" CheckMark="false" FixedContent Outlined="true" Disabled="IsLoading">
+            <MudToggleItem Value="@(MapMode.Single)" Text=@(base.IsLoading ? "Single..." : "Single") />
+            <MudToggleItem Value="@(MapMode.All)" Text=@(base.IsLoading ? "All Facilities..." : "All Facilities") />
+        </MudToggleGroup>
     }
-    @if (isLoading)
-    {
-        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-2" />
-    }
-    <GoogleMap @ref="@map" Options="@mapOptions" CssClass=@(IsMinimizedView ? "border-rad min-map" : "border-rad") ></GoogleMap>
+    <div class="map-container">
+        @if (LGAFilter is null)
+        {
+            <MudSelect T="string" Dense="true" Value="selectedLGAid" Label="Select An LgAid To View The Map"
+                       ValueChanged="@((string x) => ValueChanged(x, false))" Class="px-2 mb-1"
+                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium">
+                @foreach (LGAidCounts lgAid in lgaids)
+                {
+                    <MudSelectItem Value="@lgAid.LGAidName">@lgAid.LGAidName (@lgAid.count)</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        @if (base.IsLoading)
+        {
+            @* <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-2" /> *@
+        }
+        <GoogleMap @ref="@map" Options="@mapOptions" CssClass=@(IsMinimizedView ? "border-rad min-map" : "border-rad")></GoogleMap>
+    </div>
 </div>
 
 <style>
@@ -37,9 +46,12 @@
     gm-tilt {
         display: none;
     }
-    
+
     .min-map {
         height: 250px !important;
     }
 
+    .mud-toggle-item {
+        padding: 2px !important;
+    }
 </style>

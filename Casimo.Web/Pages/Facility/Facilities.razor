@@ -1,16 +1,16 @@
 ﻿@page "/Facilities"
+@inherits BaseDataComponent;
+@attribute [Authorize(Roles = $"{RoleConstants.FullUser}, {RoleConstants.AdminUser}")]
+
 @using Casimo.Shared
 @using Casimo.Shared.ApiModels
 @using Casimo.Shared.ApiModels.Facility
 @using Casimo.Shared.Constants
 @using Casimo.Web.Components
-
 @using Casimo.Web.Helpers
 @using Casimo.Web.Services.Interfaces
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@inherits BaseDataComponent;
 
-@attribute [Authorize(Roles = $"{RoleConstants.FullUser}, {RoleConstants.AdminUser}")]
 
 <Card Title="Facilities">
 	<ChildContent>
@@ -48,7 +48,7 @@
 					<MudDataGridPager T="FacilityListItemDto" />
 				</PagerContent>
 			</MudDataGrid>
-			<CustomMap OnUpdateCoords="() => Console.Write(true)" ShowMode="MapMode.All" MainDetFac=null OnMarkerClick="@NavigateToFacility" />
+			<CustomMap OnUpdateCoords="() => Console.Write(true)" MainDetFac=null OnMarkerClick="@NavigateToFacility" HideModeToggle="true" AllowMarkerClick="true"/>
 		</div>
 	</ChildContent>
 </Card>

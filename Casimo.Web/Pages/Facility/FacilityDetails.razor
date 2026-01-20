@@ -1,10 +1,11 @@
 ﻿@page "/Facilities/{FacilityId:int}"
+@inherits BaseDataComponent;
+
 @using Casimo.Shared
 @using Casimo.Shared.ApiModels.FitForPurpose
 @using Casimo.Shared.Constants
 @using GoogleMapsComponents
 @using GoogleMapsComponents.Maps
-@inherits BaseDataComponent;
 
 <div class="d-flex flex-column gap-4">
 
@@ -22,11 +23,7 @@
 					<div class="facility-details-container">
 						<section class="d-flex flex-column gap-3">
 							<div class="inner-container d-flex flex-column gap-2">
-								<MudToggleGroup T="MapMode" SelectionMode="SelectionMode.SingleSelection" @bind-Value="MapMode" Color="Color.Primary" CheckMark="false" FixedContent>
-									<MudToggleItem Value="@(MapMode.Single)" Text="Single" />
-									<MudToggleItem Value="@(MapMode.All)" Text="All Facilities" />
-								</MudToggleGroup>
-								<CustomMap LGAFilter="@details.FacilityDetails.LGA" MainDetFac="@details.FacilityDetails" ShowMode="@MapMode" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" AllowMarkerClick="true"/>
+								<CustomMap LGAFilter="@details.FacilityDetails.LGA" MainDetFac="@details.FacilityDetails" OnUpdateCoords=@CoordsUpdated OnMarkerClick="@NavigateToFacility" AllowMarkerClick="true"/>
 							</div>
 							<div class="facility-address">
 								<div class="inner-container">
@@ -178,9 +175,6 @@
 		height: fit-content;
 	}
 
-	.mud-toggle-item {
-		padding: 2px !important;
-	}
 
 	@@media(max-width: 1000px) {
 		.facility-details-container {

@@ -30,12 +30,6 @@ public partial class CustomMap : IDisposable
     public FacilityDetailsDto? MainDetFac { get; set; }
 
     /// <summary>
-    /// The show mode for the map. All or Single
-    /// </summary>
-    [Parameter]
-    public required MapMode ShowMode { get; set; }
-
-    /// <summary>
     /// If using a single facility, callback when coordinates are updated
     /// </summary>
     [Parameter]
@@ -59,13 +53,23 @@ public partial class CustomMap : IDisposable
     [Parameter]
     public bool AllowMarkerClick { get; set; } = false;
 
+    /// <summary>
+    /// Default hidden. If true, hides the mode toggle control.
+    /// </summary>
+    [Parameter]
+    public bool HideModeToggle { get; set; } = false;
+
     #region Private Fields
-    private bool isLoading = false;
 
     /// <summary>
     /// Previous ShowMode to detect changes
     /// </summary>
     private MapMode? previousShowMode;
+
+    /// <summary>
+    /// Toggles weather to show a single facility or all facilities
+    /// </summary>
+    private MapMode MapMode;
 
     /// <summary>
     /// A list of lgaid in the database with counts
@@ -134,10 +138,13 @@ public partial class CustomMap : IDisposable
             );
         }
 
+        if (MainDetFac is null)
+            MapMode = MapMode.All;
+
         string mapId = Guid.NewGuid().ToString();
         mapOptions = new()
         {
-            Zoom = 13,
+            Zoom = 17,
             Center = initialCenter,
             MapTypeId = MapTypeId.Satellite,
             MapId = Guid.NewGuid().ToString(),
@@ -165,8 +172,8 @@ public partial class CustomMap : IDisposable
             await ValueChanged(selectedLGAid);
         }
 
-        // Initialize previousShowMode
-        previousShowMode = ShowMode;
+        // Initialize previousShowMode and local mode
+        previousShowMode = MapMode;
 
         StateHasChanged();
     }
@@ -174,16 +181,28 @@ public partial class CustomMap : IDisposable
     /// <summary>
     /// Called when parameters change - detect ShowMode changes
     /// </summary>
-    protected override async Task OnParametersSetAsync()
-    {
+    protected override async Task OnParametersSetAsync() => await ModeChanged();
 
+    /// <summary>
+    /// Handles the mode toggle change event
+    /// </summary>
+    private async Task OnModeToggleChanged(MapMode newMode)
+    {
+        MapMode = newMode;
+        await ModeChanged();
+    }
+
+    public async Task ModeChanged()
+    {
+        IsLoading = true;
         if (MainDetFac is not null && MainDetFac.Coordinates is not null)
             mapOptions!.Center = new LatLngLiteral(MainDetFac.Coordinates.Latitude ?? 0, MainDetFac.Coordinates.Longitude ?? 0);
 
-        if ((previousShowMode != ShowMode || !markersLoaded) && !string.IsNullOrEmpty(selectedLGAid))
+        if ((previousShowMode != MapMode || !markersLoaded) && !string.IsNullOrEmpty(selectedLGAid))
             await ValueChanged(selectedLGAid, true);
 
-        previousShowMode = ShowMode;
+        previousShowMode = MapMode;
+        IsLoading = false;
     }
 
     /// <summary>
@@ -192,7 +211,7 @@ public partial class CustomMap : IDisposable
     /// <param name="lgAid">The lgaid</param>
     /// <param name="preserveZoom">If true, preserves the current zoom level when reloading</param>
     /// <returns></returns>
-    private async Task ValueChanged(string lgAid, bool preserveZoom = false)
+    private async Task ValueChanged(string lgAid, bool preserveZoom = true)
     {
         selectedLGAid = lgAid;
         // Load the facilities now for the selected LGAid
@@ -203,7 +222,7 @@ public partial class CustomMap : IDisposable
 
         await ClearMarkers();
 
-        if (ShowMode is MapMode.Single && MainDetFac is not null)
+        if (MapMode is MapMode.Single && MainDetFac is not null)
             facilities = [.. facilities.Where(x => x.FacilityID == MainDetFac.FacilityId)];
 
         await LoadMapMarkersClustered(preserveZoom);
@@ -237,7 +256,7 @@ public partial class CustomMap : IDisposable
             if (map?.InteropObject is null)
                 return;
 
-            isLoading = true;
+            base.IsLoading = true;
             await InvokeAsync(StateHasChanged);
 
             bounds = await LatLngBounds.CreateAsync(map.JsRuntime);
@@ -351,9 +370,9 @@ public partial class CustomMap : IDisposable
         }
         finally
         {
-            if (isLoading)
+            if (base.IsLoading)
             {
-                isLoading = false;
+                base.IsLoading = false;
                 await InvokeAsync(StateHasChanged);
             }
         }
@@ -419,8 +438,7 @@ public partial class CustomMap : IDisposable
         if (markers.Remove(marker.Key))
             markers[updatedCoords] = marker.Value;
 
-        // Don't modify the DefaultCoord parameter - it's bound from parent
-        // Just invoke the callback to notify parent of the change
+        // Invoke the callback to notify parent of the change. So that the new coordinates can be saved 
         await OnUpdateCoords.InvokeAsync(updatedCoords);
     }
 
