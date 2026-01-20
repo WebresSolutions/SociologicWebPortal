@@ -85,9 +85,7 @@
 					<PropertyColumn Property="x => x.LogName" Title="Assessment Title" />
 					<TemplateColumn Title="Remove">
 						<CellTemplate>
-							<MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
-										   OnClick="@(() => RemoveFromList(context.Item.LogId))">
-							</MudIconButton>
+								<MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveFromList(context.Item.LogId))" />
 						</CellTemplate>
 					</TemplateColumn>
 				</Columns>
