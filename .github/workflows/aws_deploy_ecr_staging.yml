@@ -1,4 +1,4 @@
-name: Build and Push Staging
+name: Build and Push To ECR
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
   build_and_push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    environment: Staging # Your environment name
+   # environment: Staging # Your environment name
 
     steps:
     - name: Checkout Repository
