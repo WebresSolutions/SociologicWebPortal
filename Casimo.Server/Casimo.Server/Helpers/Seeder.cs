@@ -35,8 +35,6 @@ public static class Seeder
                 _ = await roleManager.CreateAsync(new IdentityRole(RoleConstants.TemporaryUser));
 
             string adminUserName = "admin@test.com";
-            string councilUserName = "council@test.com";
-            string tempUserName = "temp@test.com";
 
             // Create test user (admin)
             ApplicationUser? adminUser = await userManager.FindByNameAsync(adminUserName);
@@ -87,97 +85,6 @@ public static class Seeder
                 }
             }
             await DbHelpers.AddUserToCasimoDB(userManager, casimoDB, adminUserName);
-
-            // Repeat the same pattern for council user
-            ApplicationUser? councilUser = await userManager.FindByNameAsync(councilUserName);
-            if (councilUser is null)
-            {
-                ApplicationUser newUser = new()
-                {
-                    UserName = councilUserName,
-                    Email = councilUserName,
-                    EmailConfirmed = true,
-                    PhoneNumber = "0452391078"
-                };
-
-                IdentityResult userCreationResult = await userManager.CreateAsync(newUser, "Abc.123");
-
-                if (!userCreationResult.Succeeded)
-                {
-                    Console.WriteLine($"Failed to create user {councilUserName}:");
-                    foreach (IdentityError error in userCreationResult.Errors)
-                    {
-                        Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
-                    }
-                    return; // Stop here if user creation failed
-                }
-
-                councilUser = newUser;
-
-                if (!await userManager.IsInRoleAsync(councilUser, RoleConstants.FullUser))
-                {
-                    IdentityResult addToRoleResult = await userManager.AddToRoleAsync(councilUser, RoleConstants.FullUser);
-                    if (!addToRoleResult.Succeeded)
-                    {
-                        Console.WriteLine($"Failed to add user {councilUser.UserName} to {RoleConstants.FullUser} role:");
-                        foreach (IdentityError error in addToRoleResult.Errors)
-                        {
-                            Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"User {councilUser.UserName} successfully added to {RoleConstants.FullUser} role.");
-                    }
-                }
-            }
-            await DbHelpers.AddUserToCasimoDB(userManager, casimoDB, councilUserName);
-            // Repeat the same pattern for council user
-            ApplicationUser? tempUser = await userManager.FindByNameAsync(tempUserName);
-            if (tempUser is null)
-            {
-                ApplicationUser newUser = new()
-                {
-                    UserName = tempUserName,
-                    Email = tempUserName,
-                    EmailConfirmed = true,
-                    PhoneNumber = "0452339107",
-                    IsTemporaryUser = true
-                };
-
-                IdentityResult userCreationResult = await userManager.CreateAsync(newUser, "Abc.123");
-
-                if (!userCreationResult.Succeeded)
-                {
-                    Console.WriteLine($"Failed to create user {councilUserName}:");
-                    foreach (IdentityError error in userCreationResult.Errors)
-                    {
-                        Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
-                    }
-                    return;
-                }
-
-                tempUser = newUser;
-
-                if (!await userManager.IsInRoleAsync(tempUser, RoleConstants.TemporaryUser))
-                {
-                    IdentityResult addToRoleResult = await userManager.AddToRoleAsync(tempUser, RoleConstants.TemporaryUser);
-                    if (!addToRoleResult.Succeeded)
-                    {
-                        Console.WriteLine($"Failed to add user {councilUser.UserName} to {RoleConstants.TemporaryUser} role:");
-                        foreach (IdentityError error in addToRoleResult.Errors)
-                        {
-                            Console.WriteLine($"- Code: {error.Code}, Description: {error.Description}");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"User {councilUser.UserName} successfully added to {RoleConstants.TemporaryUser} role.");
-                    }
-                }
-            }
-            await DbHelpers.AddUserToCasimoDB(userManager, casimoDB, tempUserName, true);
-
         }
         catch (Exception ex)
         {
