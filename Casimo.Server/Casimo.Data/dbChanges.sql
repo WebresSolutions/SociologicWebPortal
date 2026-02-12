@@ -45,11 +45,11 @@ CREATE TABLE tblAssessmentStatus(
 )
 
 -- Insert default values into the database
-INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name])VALUES(1, 'New', 'No changes have been made to a new blank assessment by the user');
-INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name])VALUES(2, 'InProgress', 'Changes have been made to a new assessment. A draft may have been saved or The initial assessment has NOT yet been submitted for review');
-INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name])VALUES(3, 'AdminReview', 'The user has submitted the draft for review by the admin. The admin will make changes to it in this state.');
-INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name])VALUES(4, 'UserReview', 'The admin has made changes then returned it to the user for final review');
-INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name])VALUES(5, 'Completed', 'The admin has closed off the assessment and no further changes will be made by the user');
+INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name],[Description])VALUES(1, 'New', 'No changes have been made to a new blank assessment by the user');
+INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name],[Description])VALUES(2, 'InProgress', 'Changes have been made to a new assessment. A draft may have been saved or The initial assessment has NOT yet been submitted for review');
+INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name],[Description])VALUES(3, 'AdminReview', 'The user has submitted the draft for review by the admin. The admin will make changes to it in this state.');
+INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name],[Description])VALUES(4, 'UserReview', 'The admin has made changes then returned it to the user for final review');
+INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name],[Description])VALUES(5, 'Completed', 'The admin has closed off the assessment and no further changes will be made by the user');
 
 -- Add the StatusId column to tblFFPasstLog
 ALTER TABLE tblFFPasstLog

@@ -193,7 +193,7 @@ public static class Dependencies
                         "http://localhost:44310",      //Local port
                         "https://localhost:44310",
                         "https://casimo-portal-staging", // Staging environment
-                        "https://casimo-portal.casimo.cloud" // Production environment
+                        "https://portal.casimo.cloud" // Production environment
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
