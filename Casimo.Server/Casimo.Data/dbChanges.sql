@@ -53,7 +53,7 @@ INSERT INTO [dbo].[tblAssessmentStatus]([ID],[Name],[Description])VALUES(5, 'Com
 
 -- Add the StatusId column to tblFFPasstLog
 ALTER TABLE tblFFPasstLog
-ADD StatusId INT NOT NULL DEFAULT 4;
+ADD StatusId INT NOT NULL DEFAULT 5;
 
 -- Create an index
 CREATE INDEX IX_tblFFPasslog_StatusId ON tblFFPasstLog (StatusId);
