@@ -175,7 +175,7 @@ public class EnableAuthenticatorModel : PageModel
     {
         return string.Format(
             AuthenticatorUriFormat,
-            _urlEncoder.Encode("Razor Pages"),
+            _urlEncoder.Encode("Casimo Portal"),
             _urlEncoder.Encode(email),
             unformattedKey,
             _urlEncoder.Encode("Casimo Portal"));
